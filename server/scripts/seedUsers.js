@@ -1,0 +1,72 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const User = require('../models/User');
+require('dotenv').config();
+
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus_complaints';
+
+const defaultUsers = [
+  {
+    fullName: 'Tigist Haile',
+    email: 'office@campus.edu',
+    password: 'password',
+    role: 'office',
+    department: 'Registrar',
+  },
+  {
+    fullName: 'Admin User',
+    email: 'admin@campus.edu',
+    password: 'password',
+    role: 'admin',
+    department: 'Administration',
+  },
+];
+
+async function seedUsers() {
+  try {
+    await mongoose.connect(MONGO_URI, {
+      dbName: 'campus_complaints',
+    });
+    console.log('✅ Connected to MongoDB');
+
+    // Clear existing default users (optional - comment out if you want to keep existing data)
+    await User.deleteMany({ email: { $in: ['office@campus.edu', 'admin@campus.edu'] } });
+    console.log('🧹 Cleared existing office/admin users');
+
+    // Create default users
+    for (const userData of defaultUsers) {
+      const existingUser = await User.findOne({ email: userData.email });
+      if (existingUser) {
+        console.log(`⚠️  User ${userData.email} already exists, skipping...`);
+        continue;
+      }
+
+      // Hash password manually
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const user = new User({
+        ...userData,
+        password: hashedPassword,
+      });
+      await user.save();
+      console.log(`✅ Created user: ${userData.email} (${userData.role})`);
+    }
+
+    console.log('\n🎉 Default users seeded successfully!');
+    console.log('\n📋 Login Credentials:');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('Office Account:');
+    console.log('  Email: office@campus.edu');
+    console.log('  Password: password');
+    console.log('\nAdmin Account:');
+    console.log('  Email: admin@campus.edu');
+    console.log('  Password: password');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error seeding users:', err);
+    process.exit(1);
+  }
+}
+
+seedUsers();
