@@ -35,7 +35,7 @@ export function StudentDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Welcome, {user.fullName || user.name}</h1>
-          <p className="text-gray-500 mt-1">Manage and track your campus complaints</p>
+          <p className="text-muted-foreground mt-1">Manage and track your campus complaints</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} size="lg">
           <PlusCircle className="size-4 mr-2" />
@@ -52,7 +52,7 @@ export function StudentDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">{stat.label}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
                     <p className="text-3xl font-bold mt-1">{stat.value}</p>
                   </div>
                   <div className={`size-12 rounded-full ${stat.color} flex items-center justify-center`}>
@@ -82,9 +82,9 @@ export function StudentDashboard() {
             {userComplaints.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <FileText className="size-12 text-gray-300 mb-3" />
+                  <FileText className="size-12 text-muted-foreground opacity-50 mb-3" />
                   <h3 className="font-semibold text-lg mb-1">No complaints yet</h3>
-                  <p className="text-gray-500 text-sm mb-4">Click "New Complaint" to submit your first issue</p>
+                  <p className="text-muted-foreground text-sm mb-4">Click "New Complaint" to submit your first issue</p>
                   <Button onClick={() => setShowForm(true)}>
                     <PlusCircle className="size-4 mr-2" />
                     Submit Your First Complaint
@@ -110,7 +110,7 @@ export function StudentDashboard() {
             </div>
             {pendingCount === 0 && (
               <Card>
-                <CardContent className="py-12 text-center text-gray-500">
+                <CardContent className="py-12 text-center text-muted-foreground">
                   No pending complaints
                 </CardContent>
               </Card>
@@ -127,7 +127,7 @@ export function StudentDashboard() {
             </div>
             {inProgressCount === 0 && (
               <Card>
-                <CardContent className="py-12 text-center text-gray-500">
+                <CardContent className="py-12 text-center text-muted-foreground">
                   No complaints in progress
                 </CardContent>
               </Card>
@@ -144,7 +144,7 @@ export function StudentDashboard() {
             </div>
             {resolvedCount === 0 && (
               <Card>
-                <CardContent className="py-12 text-center text-gray-500">
+                <CardContent className="py-12 text-center text-muted-foreground">
                   No resolved complaints
                 </CardContent>
               </Card>
@@ -161,7 +161,7 @@ export function StudentDashboard() {
             </div>
             {rejectedCount === 0 && (
               <Card>
-                <CardContent className="py-12 text-center text-gray-500">
+                <CardContent className="py-12 text-center text-muted-foreground">
                   No rejected complaints
                 </CardContent>
               </Card>

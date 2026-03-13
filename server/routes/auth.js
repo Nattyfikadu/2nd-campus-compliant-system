@@ -3,6 +3,48 @@ const User = require('../models/User');
 
 const router = express.Router();
 
+// Simple Student ID validation based on Ethiopian calendar rules
+// Example ID: 1205001 -> 12 (year), 05 (month), 001 (student number)
+// Rules:
+// - Exactly 7 digits
+// - Month between 01 and 12
+// - Join year must not be more than MAX_STUDY_YEARS behind CURRENT_EC_YEAR
+const CURRENT_EC_YEAR = 2018;
+const MAX_STUDY_YEARS = 6;
+
+function validateStudentId(studentId) {
+  if (!/^\d{7}$/.test(studentId)) {
+    return { valid: false, error: 'Invalid student ID format. Use 7 digits like 1205001.' };
+  }
+
+  const yearPart = parseInt(studentId.substring(0, 2), 10);
+  const monthPart = parseInt(studentId.substring(2, 4), 10);
+
+  if (Number.isNaN(yearPart) || Number.isNaN(monthPart)) {
+    return { valid: false, error: 'Invalid student ID format.' };
+  }
+
+  if (monthPart < 1 || monthPart > 12) {
+    return { valid: false, error: 'Invalid month in student ID. Month must be between 01 and 12.' };
+  }
+
+  const joinYear = 2000 + yearPart;
+  const studyDuration = CURRENT_EC_YEAR - joinYear;
+
+  if (studyDuration < 0) {
+    return { valid: false, error: 'Student ID has a future join year, which is invalid.' };
+  }
+
+  if (studyDuration > MAX_STUDY_YEARS) {
+    return {
+      valid: false,
+      error: 'Student ID expired. Only current students (within 6 years) can register.',
+    };
+  }
+
+  return { valid: true };
+}
+
 // Register new user
 router.post('/register', async (req, res) => {
   try {
@@ -27,6 +69,13 @@ router.post('/register', async (req, res) => {
     // Role-specific validation
     if (role === 'student' && !studentId) {
       return res.status(400).json({ error: 'Student ID is required for students' });
+    }
+
+    if (role === 'student' && studentId) {
+      const { valid, error } = validateStudentId(studentId);
+      if (!valid) {
+        return res.status(400).json({ error });
+      }
     }
 
     if (role === 'staff' && !staffId) {
@@ -135,6 +184,23 @@ router.get('/user/:id', async (req, res) => {
   } catch (err) {
     console.error('Error fetching user:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// Get all staff members
+router.get('/staff', async (req, res) => {
+  try {
+    const staff = await User.find({ role: 'staff' }).select('-password');
+    res.json(staff.map(d => {
+      let obj = d.toObject({ versionKey: false });
+      obj.id = obj._id.toString();
+      delete obj._id;
+      delete obj.password;
+      return obj;
+    }));
+  } catch (err) {
+    console.error('Error fetching staff:', err);
+    res.status(500).json({ error: 'Failed to fetch staff' });
   }
 });
 

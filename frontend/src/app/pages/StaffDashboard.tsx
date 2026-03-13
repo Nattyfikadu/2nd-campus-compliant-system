@@ -26,7 +26,7 @@ export function StaffDashboard() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Welcome, {user.fullName || user.name}</h1>
-        <p className="text-gray-500 mt-1">Manage complaints assigned to you</p>
+        <p className="text-muted-foreground mt-1">Manage complaints assigned to you</p>
       </div>
 
       {/* Stats */}
@@ -38,7 +38,7 @@ export function StaffDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">{stat.label}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
                     <p className="text-3xl font-bold mt-1">{stat.value}</p>
                   </div>
                   <div className={`size-12 rounded-full ${stat.color} flex items-center justify-center`}>
@@ -61,8 +61,8 @@ export function StaffDashboard() {
         <TabsContent value="in-progress" className="space-y-4">
           {inProgressComplaints.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
-                <Clock className="size-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Clock className="size-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>No complaints currently assigned to you</p>
               </CardContent>
             </Card>
@@ -82,8 +82,8 @@ export function StaffDashboard() {
         <TabsContent value="resolved" className="space-y-4">
           {resolvedComplaints.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
-                <CheckCircle2 className="size-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <CheckCircle2 className="size-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>No resolved complaints yet</p>
               </CardContent>
             </Card>

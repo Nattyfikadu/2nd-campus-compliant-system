@@ -9,17 +9,28 @@ export type ComplaintLocation =
   | 'registrar' 
   | 'hr-office' 
   | 'faculty' 
-  | 'library';
+  | 'library'
+  | 'unknown';
 
 export type IssueType = 
   | 'service-problem' 
   | 'staff-behavior' 
   | 'security-issue' 
   | 'facility-problem' 
-  | 'academic-issue';
+  | 'academic-issue'
+  | 'other';
+
+export interface Attachment {
+  url: string;
+  type: 'image' | 'video';
+  originalName: string;
+}
 
 export interface Complaint {
   id: string;
+  type?: 'student' | 'visitor' | 'anonymous';
+  trackingCode?: string;
+  studentId?: string;
   title: string;
   description: string;
   category: IssueType;
@@ -38,15 +49,24 @@ export interface Complaint {
   updatedAt: Date;
   resolvedAt?: Date;
   rejectionReason?: string;
+  attachments?: Attachment[];
 }
 
 interface ComplaintContextType {
   complaints: Complaint[];
-  addComplaint: (complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
-  updateComplaintStatus: (id: string, status: ComplaintStatus, assignedTo?: { id: string; name: string }, rejectionReason?: string) => void;
+  addComplaint: (
+    complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>
+  ) => Promise<Complaint | null>;
+  updateComplaintStatus: (
+    id: string,
+    status: ComplaintStatus,
+    assignedTo?: { id: string; name: string },
+    rejectionReason?: string
+  ) => void;
   getComplaintsByUser: (userId: string) => Complaint[];
   getComplaintsByStatus: (status: ComplaintStatus) => Complaint[];
   getComplaintsByAssignee: (assigneeId: string) => Complaint[];
+  reloadComplaints: () => Promise<void>;
 }
 
 const ComplaintContext = createContext<ComplaintContextType | undefined>(undefined);
@@ -62,23 +82,24 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     resolvedAt: c.resolvedAt ? new Date(c.resolvedAt) : undefined,
   });
 
-  useEffect(() => {
-    const fetchComplaints = async () => {
-      try {
-        const res = await fetch('http://localhost:4000/api/complaints');
-        const data = await res.json();
-        setComplaints(data.map(hydrateComplaintDates));
-      } catch (err) {
-        console.error('Failed to load complaints from API', err);
-      }
-    };
+  const reloadComplaints = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/complaints');
+      const data = await res.json();
+      setComplaints(data.map(hydrateComplaintDates));
+    } catch (err) {
+      console.error('Failed to load complaints from API', err);
+    }
+  };
 
-    fetchComplaints();
+  useEffect(() => {
+    reloadComplaints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addComplaint = async (
     complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>
-  ) => {
+  ): Promise<Complaint | null> => {
     try {
       const res = await fetch('http://localhost:4000/api/complaints', {
         method: 'POST',
@@ -94,14 +115,16 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
 
       if (!res.ok) {
         console.error('Failed to create complaint', await res.text());
-        return;
+        return null;
       }
 
       const data = await res.json();
       const newComplaint = hydrateComplaintDates(data);
       setComplaints(prev => [newComplaint, ...prev]);
+      return newComplaint;
     } catch (err) {
       console.error('Error creating complaint', err);
+      return null;
     }
   };
 
@@ -157,7 +180,8 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
       updateComplaintStatus,
       getComplaintsByUser,
       getComplaintsByStatus,
-      getComplaintsByAssignee
+      getComplaintsByAssignee,
+      reloadComplaints
     }}>
       {children}
     </ComplaintContext.Provider>

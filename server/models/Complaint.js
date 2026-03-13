@@ -17,8 +17,29 @@ const AssignedToSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const AttachmentSchema = new mongoose.Schema(
+  {
+    url: { type: String, required: true }, // /uploads/filename.ext
+    type: {
+      type: String,
+      enum: ['image', 'video'],
+      required: true,
+    },
+    originalName: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const ComplaintSchema = new mongoose.Schema(
   {
+    type: {
+      type: String,
+      enum: ['student', 'visitor', 'anonymous'],
+      default: 'student',
+      required: true,
+    },
+    trackingCode: { type: String },
+    studentId: { type: String },
     title: { type: String, required: true },
     description: { type: String, required: true },
     category: {
@@ -29,12 +50,13 @@ const ComplaintSchema = new mongoose.Schema(
         'security-issue',
         'facility-problem',
         'academic-issue',
+        'other',
       ],
       required: true,
     },
     location: {
       type: String,
-      enum: ['cafeteria', 'dormitory', 'registrar', 'hr-office', 'faculty', 'library'],
+      enum: ['cafeteria', 'dormitory', 'registrar', 'hr-office', 'faculty', 'library', 'unknown'],
       required: true,
     },
     status: {
@@ -47,6 +69,7 @@ const ComplaintSchema = new mongoose.Schema(
     assignedTo: { type: AssignedToSchema, required: false },
     rejectionReason: { type: String },
     resolvedAt: { type: Date },
+    attachments: { type: [AttachmentSchema], default: [] },
   },
   {
     timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu';
 import { GraduationCap, LogOut } from 'lucide-react';
+import { ModeToggle } from '@/app/components/mode-toggle';
 
 export function DashboardLayout() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -75,9 +76,9 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-card border-b border-border sticky top-0 z-10 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
@@ -85,16 +86,19 @@ export function DashboardLayout() {
                 <GraduationCap className="size-6 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-lg">Campus Complaint System</h1>
-                <p className="text-xs text-gray-500">Issue Management & Tracking</p>
+                <h1 className="font-semibold text-lg text-foreground">Campus Complaint System</h1>
+                <p className="text-xs text-muted-foreground">Issue Management & Tracking</p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium">{getUserDisplayName()}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
+                <p className="text-sm font-medium text-foreground">{getUserDisplayName()}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
+
+              {/* Theme toggle */}
+              <ModeToggle />
 
               {/* Quick logout icon button */}
               <Button
@@ -120,9 +124,9 @@ export function DashboardLayout() {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{getUserDisplayName()}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                      <span className={`text-xs px-2 py-1 rounded-full w-fit capitalize ${getRoleBadgeColor(user.role)}`}>
+                      <p className="text-sm font-medium text-foreground">{getUserDisplayName()}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <span className={`text-xs px-2 py-1 rounded-full w-fit capitalize border border-border mt-1 ${getRoleBadgeColor(user.role)}`}>
                         {user.role}
                       </span>
                     </div>

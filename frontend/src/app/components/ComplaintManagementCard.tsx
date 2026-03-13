@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Complaint, useComplaints } from '@/app/context/ComplaintContext';
+import { useAuth } from '@/app/context/AuthContext';
 import { Card, CardContent, CardHeader } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Label } from '@/app/components/ui/label';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -15,9 +16,9 @@ import {
   DialogTrigger,
 } from '@/app/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { 
-  Clock, 
-  CheckCircle2, 
+import {
+  Clock,
+  CheckCircle2,
   XCircle,
   Calendar,
   MapPin,
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 
 interface ComplaintManagementCardProps {
   complaint: Complaint;
@@ -62,28 +64,37 @@ const issueTypeLabels: Record<string, string> = {
   'academic-issue': 'Academic Issue',
 };
 
-// Mock staff members for assignment
-const staffMembers = [
-  { id: '3', name: 'Lemma Teshome' },
-  { id: '6', name: 'Kebede Alemu' },
-  { id: '7', name: 'Sara Mekonnen' },
-  { id: '8', name: 'Dawit Bekele' },
-];
+const API_BASE = 'http://localhost:4000';
 
-export function ComplaintManagementCard({ 
-  complaint, 
-  canApprove = false, 
+export function ComplaintManagementCard({
+  complaint,
+  canApprove = false,
   canAssign = false,
-  canResolve = false 
+  canResolve = false
 }: ComplaintManagementCardProps) {
   const { updateComplaintStatus } = useComplaints();
+  const { getAllStaff } = useAuth();
   const [rejectionReason, setRejectionReason] = useState('');
   const [selectedStaff, setSelectedStaff] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [staffMembers, setStaffMembers] = useState<{ id: string, name: string }[]>([]);
 
-  const status = statusConfig[complaint.status];
+  const statusKey = complaint.status as keyof typeof statusConfig;
+  const status = statusConfig[statusKey] || statusConfig.pending;
   const StatusIcon = status.icon;
+
+  const handleOpenAssignDialog = async (open: boolean) => {
+    setShowAssignDialog(open);
+    if (open && getAllStaff) {
+      try {
+        const staffList = await getAllStaff();
+        setStaffMembers(staffList.map(s => ({ id: s.id, name: s.fullName || s.name || 'Unknown Staff' })));
+      } catch (err) {
+        console.error('Failed to load staff list');
+      }
+    }
+  };
 
   const handleApprove = () => {
     updateComplaintStatus(complaint.id, 'approved');
@@ -139,11 +150,11 @@ export function ComplaintManagementCard({
                 <StatusIcon className="size-3 mr-1" />
                 {status.label}
               </Badge>
-              <Badge variant="secondary" className="bg-gray-100">
+              <Badge variant="secondary">
                 <MapPin className="size-3 mr-1" />
                 {locationLabels[complaint.location]}
               </Badge>
-              <Badge variant="secondary" className="bg-gray-100">
+              <Badge variant="secondary">
                 <AlertTriangle className="size-3 mr-1" />
                 {issueTypeLabels[complaint.category]}
               </Badge>
@@ -152,9 +163,44 @@ export function ComplaintManagementCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600">{complaint.description}</p>
-        
-        <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-2 border-t">
+        <p className="text-sm text-muted-foreground">{complaint.description}</p>
+
+        {complaint.attachments && complaint.attachments.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500">Attachments:</p>
+            <div className="flex flex-wrap gap-2">
+              {complaint.attachments.map((att) =>
+                att.type === 'image' ? (
+                  <a
+                    key={att.url}
+                    href={`${API_BASE}${att.url}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block"
+                  >
+                    <ImageWithFallback
+                      src={`${API_BASE}${att.url}`}
+                      alt={att.originalName}
+                      className="h-16 w-16 object-cover rounded border"
+                    />
+                  </a>
+                ) : (
+                  <a
+                    key={att.url}
+                    href={`${API_BASE}${att.url}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 underline"
+                  >
+                    {att.originalName || 'Video attachment'}
+                  </a>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <User className="size-3" />
             <span>Submitted by: {complaint.submittedBy.name}</span>
@@ -199,7 +245,7 @@ export function ComplaintManagementCard({
                       id="rejection-reason"
                       placeholder="Explain why this complaint is being rejected..."
                       value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectionReason(e.target.value)}
                       rows={4}
                     />
                   </div>
@@ -217,7 +263,7 @@ export function ComplaintManagementCard({
           )}
 
           {canAssign && complaint.status === 'approved' && (
-            <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+            <Dialog open={showAssignDialog} onOpenChange={handleOpenAssignDialog}>
               <DialogTrigger asChild>
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                   <UserCheck className="size-3 mr-1" />

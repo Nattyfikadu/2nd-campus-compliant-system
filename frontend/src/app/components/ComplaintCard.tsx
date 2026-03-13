@@ -1,11 +1,11 @@
 import { Complaint } from '@/app/context/ComplaintContext';
 import { Card, CardContent, CardHeader } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
-import { 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  XCircle, 
+import {
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
   Loader2,
   Calendar,
   MapPin,
@@ -13,6 +13,7 @@ import {
   User
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
 
 interface ComplaintCardProps {
   complaint: Complaint;
@@ -63,8 +64,11 @@ const issueTypeLabels: Record<string, string> = {
   'academic-issue': 'Academic Issue',
 };
 
+const API_BASE = 'http://localhost:4000';
+
 export function ComplaintCard({ complaint }: ComplaintCardProps) {
-  const status = statusConfig[complaint.status];
+  const statusKey = complaint.status as keyof typeof statusConfig;
+  const status = statusConfig[statusKey] || statusConfig.pending;
   const StatusIcon = status.icon;
 
   return (
@@ -78,11 +82,11 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
                 <StatusIcon className="size-3 mr-1" />
                 {status.label}
               </Badge>
-              <Badge variant="secondary" className="bg-gray-100">
+              <Badge variant="secondary">
                 <MapPin className="size-3 mr-1" />
                 {locationLabels[complaint.location]}
               </Badge>
-              <Badge variant="secondary" className="bg-gray-100">
+              <Badge variant="secondary">
                 <AlertTriangle className="size-3 mr-1" />
                 {issueTypeLabels[complaint.category]}
               </Badge>
@@ -91,9 +95,44 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-gray-600 line-clamp-2">{complaint.description}</p>
-        
-        <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-2 border-t">
+        <p className="text-sm text-muted-foreground line-clamp-2">{complaint.description}</p>
+
+        {complaint.attachments && complaint.attachments.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500">Attachments:</p>
+            <div className="flex flex-wrap gap-2">
+              {complaint.attachments.map((att) =>
+                att.type === 'image' ? (
+                  <a
+                    key={att.url}
+                    href={`${API_BASE}${att.url}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block"
+                  >
+                    <ImageWithFallback
+                      src={`${API_BASE}${att.url}`}
+                      alt={att.originalName}
+                      className="h-16 w-16 object-cover rounded border"
+                    />
+                  </a>
+                ) : (
+                  <a
+                    key={att.url}
+                    href={`${API_BASE}${att.url}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 underline"
+                  >
+                    {att.originalName || 'Video attachment'}
+                  </a>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <Calendar className="size-3" />
             <span>Submitted: {format(complaint.createdAt, 'MMM d, yyyy')}</span>

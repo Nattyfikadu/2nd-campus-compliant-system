@@ -22,6 +22,7 @@ interface AuthContextType {
   register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
+  getAllStaff: () => Promise<User[]>;
 }
 
 export interface RegisterData {
@@ -115,8 +116,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
   };
 
+  const getAllStaff = async (): Promise<User[]> => {
+    try {
+      const res = await fetch('http://localhost:4000/api/auth/staff');
+      if (!res.ok) {
+        return [];
+      }
+      return await res.json();
+    } catch (err) {
+      console.error('Fetch staff error:', err);
+      return [];
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user, getAllStaff }}>
       {children}
     </AuthContext.Provider>
   );

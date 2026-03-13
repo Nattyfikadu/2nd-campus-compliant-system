@@ -8,7 +8,7 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { toast } from 'sonner';
-import { FileText, MapPin, AlertTriangle } from 'lucide-react';
+import { FileText, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 
 const locations: { value: ComplaintLocation; label: string; icon: string }[] = [
   { value: 'cafeteria', label: 'Cafeteria', icon: '🍽️' },
@@ -17,6 +17,7 @@ const locations: { value: ComplaintLocation; label: string; icon: string }[] = [
   { value: 'hr-office', label: 'HR Office', icon: '👥' },
   { value: 'faculty', label: 'Faculty Building', icon: '🎓' },
   { value: 'library', label: 'Library', icon: '📚' },
+  { value: 'unknown', label: 'Unknown', icon: '❓' },
 ];
 
 const issueTypes: { value: IssueType; label: string; icon: string }[] = [
@@ -25,6 +26,7 @@ const issueTypes: { value: IssueType; label: string; icon: string }[] = [
   { value: 'security-issue', label: 'Security Issue', icon: '🔒' },
   { value: 'facility-problem', label: 'Facility Problem', icon: '🔧' },
   { value: 'academic-issue', label: 'Academic Issue', icon: '📖' },
+  { value: 'other', label: 'Other', icon: '📝' },
 ];
 
 interface ComplaintFormProps {
@@ -33,13 +35,15 @@ interface ComplaintFormProps {
 
 export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
   const { user } = useAuth();
-  const { addComplaint } = useComplaints();
+  const { addComplaint, reloadComplaints } = useComplaints();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     location: '' as ComplaintLocation,
     category: '' as IssueType,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [files, setFiles] = useState<FileList | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,32 +58,68 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
       return;
     }
 
-    await addComplaint({
-      title: formData.title,
-      description: formData.description,
-      location: formData.location,
-      category: formData.category,
-      submittedBy: {
-        id: user.id,
-        name: user.fullName || user.name || 'Unknown User',
-        email: user.email,
-      },
-    });
+    setIsSubmitting(true);
 
-    toast.success('Complaint submitted successfully!', {
-      description: 'Your complaint has been submitted and is pending review.',
-    });
+    try {
+      // First create the complaint
+      const created = await addComplaint({
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        category: formData.category,
+        submittedBy: {
+          id: user.id,
+          name: user.fullName || user.name || 'Unknown User',
+          email: user.email,
+        },
+      });
 
-    // Reset form
-    setFormData({
-      title: '',
-      description: '',
-      location: '' as ComplaintLocation,
-      category: '' as IssueType,
-    });
+      if (!created) {
+        toast.error('Failed to submit complaint');
+        return;
+      }
 
-    if (onSuccess) {
-      onSuccess();
+      // If there are attachments, upload them
+      if (files && files.length > 0) {
+        const formDataUpload = new FormData();
+        Array.from(files).forEach((file) => {
+          formDataUpload.append('files', file);
+        });
+
+        const uploadRes = await fetch(`http://localhost:4000/api/uploads/${created.id}`, {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!uploadRes.ok) {
+          console.error('Failed to upload attachments', await uploadRes.text());
+          toast.error('Complaint saved, but file upload failed.');
+        } else {
+          // Refresh complaints so office/staff/admin see attachments
+          await reloadComplaints();
+        }
+      }
+
+      toast.success('Complaint submitted successfully!', {
+        description: 'Your complaint has been submitted and is pending review.',
+      });
+
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        location: '' as ComplaintLocation,
+        category: '' as IssueType,
+      });
+      setFiles(null);
+
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      toast.error('Failed to submit complaint');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -102,7 +142,7 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
               id="title"
               placeholder="Brief summary of the issue"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })}
               required
             />
           </div>
@@ -167,18 +207,42 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
               id="description"
               placeholder="Provide a detailed description of the issue..."
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
               rows={6}
               required
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Include as much detail as possible to help us resolve your issue quickly
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="attachments">Attachments (photos/videos, optional)</Label>
+            <Input
+              id="attachments"
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFiles(e.target.files)
+              }
+              disabled={isSubmitting}
+            />
+            <p className="text-xs text-muted-foreground">
+              You can upload up to 5 files. Max 20MB each.
+            </p>
+          </div>
+
           <div className="flex gap-3">
-            <Button type="submit" className="flex-1">
-              Submit Complaint
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Complaint'
+              )}
             </Button>
             <Button
               type="button"
@@ -189,6 +253,7 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
                 location: '' as ComplaintLocation,
                 category: '' as IssueType,
               })}
+              disabled={isSubmitting}
             >
               Clear
             </Button>

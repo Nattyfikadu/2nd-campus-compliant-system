@@ -7,6 +7,7 @@ import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { GraduationCap } from 'lucide-react';
+import { ModeToggle } from '@/app/components/mode-toggle';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     const success = await login(email, password);
     if (success) {
       navigate('/dashboard');
@@ -28,7 +29,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-4 transition-colors duration-300">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
@@ -65,7 +69,7 @@ export function LoginPage() {
                 required
               />
             </div>
-            
+
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -78,22 +82,28 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6 space-y-3">
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-muted-foreground">
+              Visiting campus?{' '}
+              <Link to="/anonymous" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                Submit an anonymous complaint
+              </Link>
+            </div>
+            <div className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:underline font-medium">
+              <Link to="/register" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                 Register here
               </Link>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg space-y-2 text-sm">
-              <p className="font-semibold">Register as:</p>
-              <div className="space-y-1 text-xs text-gray-600">
-                <Link to="/register/student" className="block text-blue-600 hover:underline">
+            <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
+              <p className="font-semibold text-foreground">Register as:</p>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <Link to="/register/student" className="block text-blue-600 dark:text-blue-400 hover:underline">
                   Student
                 </Link>
-                <Link to="/register/staff" className="block text-blue-600 hover:underline">
+                <Link to="/register/staff" className="block text-blue-600 dark:text-blue-400 hover:underline">
                   Staff
                 </Link>
-                <Link to="/register/visitor" className="block text-blue-600 hover:underline">
+                <Link to="/register/visitor" className="block text-blue-600 dark:text-blue-400 hover:underline">
                   Visitor
                 </Link>
               </div>

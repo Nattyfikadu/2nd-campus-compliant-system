@@ -29,7 +29,7 @@ export function OfficeDashboard() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Office Dashboard</h1>
-        <p className="text-gray-500 mt-1">Review, approve, and assign complaints</p>
+        <p className="text-muted-foreground mt-1">Review, approve, and assign complaints</p>
       </div>
 
       {/* Stats */}
@@ -41,7 +41,7 @@ export function OfficeDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">{stat.label}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
                     <p className="text-3xl font-bold mt-1">{stat.value}</p>
                   </div>
                   <div className={`size-12 rounded-full ${stat.color} flex items-center justify-center`}>
@@ -67,8 +67,8 @@ export function OfficeDashboard() {
         <TabsContent value="pending" className="space-y-4">
           {pendingComplaints.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
-                <Clock className="size-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Clock className="size-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>No pending complaints to review</p>
               </CardContent>
             </Card>
@@ -88,8 +88,8 @@ export function OfficeDashboard() {
         <TabsContent value="approved" className="space-y-4">
           {approvedComplaints.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
-                <CheckCircle2 className="size-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <CheckCircle2 className="size-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>No approved complaints awaiting assignment</p>
               </CardContent>
             </Card>
@@ -109,8 +109,8 @@ export function OfficeDashboard() {
         <TabsContent value="in-progress" className="space-y-4">
           {inProgressComplaints.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
-                <UserCheck className="size-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <UserCheck className="size-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>No complaints currently in progress</p>
               </CardContent>
             </Card>
@@ -130,8 +130,8 @@ export function OfficeDashboard() {
         <TabsContent value="resolved" className="space-y-4">
           {resolvedComplaints.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
-                <CheckCircle2 className="size-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <CheckCircle2 className="size-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>No resolved complaints</p>
               </CardContent>
             </Card>
@@ -150,8 +150,8 @@ export function OfficeDashboard() {
         <TabsContent value="rejected" className="space-y-4">
           {rejectedComplaints.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-gray-500">
-                <XCircle className="size-12 mx-auto mb-3 text-gray-300" />
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <XCircle className="size-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>No rejected complaints</p>
               </CardContent>
             </Card>

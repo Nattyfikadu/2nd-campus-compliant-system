@@ -7,6 +7,7 @@ import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { GraduationCap, UserPlus, Building2 } from 'lucide-react';
+import { ModeToggle } from '@/app/components/mode-toggle';
 
 const initialFormData = {
   fullName: '',
@@ -124,7 +125,10 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-4 transition-colors duration-300">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
@@ -267,7 +271,7 @@ export function RegisterPage() {
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground mt-1">
                 Used for SMS/WhatsApp notifications when your complaint status updates
               </p>
             </div>
@@ -310,9 +314,9 @@ export function RegisterPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link to="/" className="text-blue-600 hover:underline font-medium">
+            <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
               Sign in here
             </Link>
           </div>
