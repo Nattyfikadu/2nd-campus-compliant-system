@@ -4,7 +4,7 @@ const SubmittedBySchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
-    email: { type: String, required: true },
+    email: { type: String, required: false },
   },
   { _id: false }
 );
