@@ -20,6 +20,16 @@ const defaultUsers = [
     role: 'admin',
     department: 'Administration',
   },
+  {
+    fullName: 'Lemma Teshome',
+    email: 'staff@campus.edu',
+    password: 'password',
+    role: 'staff',
+    staffId: '1000001',
+    position: 'Maintenance Staff',
+    staffLocations: ['dormitory', 'cafeteria'],
+    staffApproved: true,
+  },
 ];
 
 async function seedUsers() {
@@ -30,8 +40,9 @@ async function seedUsers() {
     console.log('✅ Connected to MongoDB');
 
     // Clear existing default users (optional - comment out if you want to keep existing data)
-    await User.deleteMany({ email: { $in: ['office@campus.edu', 'admin@campus.edu'] } });
-    console.log('🧹 Cleared existing office/admin users');
+    const emails = defaultUsers.map((u) => u.email);
+    await User.deleteMany({ email: { $in: emails } });
+    console.log('🧹 Cleared existing default users');
 
     // Create default users
     for (const userData of defaultUsers) {
@@ -59,6 +70,9 @@ async function seedUsers() {
     console.log('  Password: password');
     console.log('\nAdmin Account:');
     console.log('  Email: admin@campus.edu');
+    console.log('  Password: password');
+    console.log('\nStaff Account (approved for testing):');
+    console.log('  Email: staff@campus.edu');
     console.log('  Password: password');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 

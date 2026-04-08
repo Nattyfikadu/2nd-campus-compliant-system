@@ -59,6 +59,7 @@ router.post('/register', async (req, res) => {
       department,
       faculty,
       position,
+      staffLocations,
     } = req.body;
 
     // Validation
@@ -80,6 +81,15 @@ router.post('/register', async (req, res) => {
 
     if (role === 'staff' && !staffId) {
       return res.status(400).json({ error: 'Staff ID is required for staff' });
+    }
+
+    if (role === 'staff') {
+      const locations = Array.isArray(staffLocations) ? staffLocations : [];
+      if (locations.length === 0) {
+        return res.status(400).json({
+          error: 'Staff must select at least one working location (e.g., dormitory, cafeteria).',
+        });
+      }
     }
 
     // Check if email already exists
@@ -122,6 +132,10 @@ router.post('/register', async (req, res) => {
     if (role === 'staff') {
       userData.staffId = staffId;
       userData.position = position || undefined;
+      userData.staffLocations = Array.isArray(staffLocations) ? staffLocations : [];
+      userData.staffApproved = false;
+      userData.staffRejected = false;
+      userData.staffRejectionReason = undefined;
     }
 
     const user = new User(userData);
@@ -163,6 +177,17 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Staff must be approved by office/admin
+    if (user.role === 'staff') {
+      if (user.staffRejected) {
+        const reason = user.staffRejectionReason || 'No rejection reason provided.';
+        return res.status(403).json({ error: `Staff registration rejected: ${reason}` });
+      }
+      if (!user.staffApproved) {
+        return res.status(403).json({ error: 'Staff account is not approved yet.' });
+      }
+    }
+
     res.json({
       message: 'Login successful',
       user: user.toClient(),
@@ -172,6 +197,11 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Failed to login' });
   }
 });
+
+// Staff routes:
+// - GET /api/auth/staff?location=... -> approved staff (optionally filtered)
+// - GET /api/auth/staff/pending -> staff awaiting approval
+// - PATCH /api/auth/staff/:id/approve -> approve staff
 
 // Get user by ID (for profile, etc.)
 router.get('/user/:id', async (req, res) => {
@@ -187,20 +217,81 @@ router.get('/user/:id', async (req, res) => {
   }
 });
 
-// Get all staff members
 router.get('/staff', async (req, res) => {
   try {
-    const staff = await User.find({ role: 'staff' }).select('-password');
-    res.json(staff.map(d => {
-      let obj = d.toObject({ versionKey: false });
-      obj.id = obj._id.toString();
-      delete obj._id;
-      delete obj.password;
-      return obj;
-    }));
+    const { location } = req.query;
+    const filter = { role: 'staff', staffApproved: true, staffRejected: false };
+    if (typeof location === 'string' && location.trim()) {
+      filter.staffLocations = { $in: [location] };
+    }
+
+    const staff = await User.find(filter).select('-password');
+    res.json(staff.map((d) => d.toClient()));
   } catch (err) {
-    console.error('Error fetching staff:', err);
+    console.error('Error fetching approved staff:', err);
     res.status(500).json({ error: 'Failed to fetch staff' });
+  }
+});
+
+router.get('/staff/pending', async (req, res) => {
+  try {
+    const staff = await User.find({ role: 'staff', staffApproved: false, staffRejected: false }).select('-password');
+    res.json(staff.map((d) => d.toClient()));
+  } catch (err) {
+    console.error('Error fetching pending staff:', err);
+    res.status(500).json({ error: 'Failed to fetch pending staff' });
+  }
+});
+
+router.patch('/staff/:id/approve', async (req, res) => {
+  try {
+    const { actorRole } = req.body;
+    if (actorRole !== 'office' && actorRole !== 'admin') {
+      return res.status(403).json({ error: 'Only office/admin can approve staff.' });
+    }
+
+    const staff = await User.findById(req.params.id);
+    if (!staff || staff.role !== 'staff') {
+      return res.status(404).json({ error: 'Staff not found' });
+    }
+
+    staff.staffApproved = true;
+    staff.staffRejected = false;
+    staff.staffRejectionReason = undefined;
+    await staff.save();
+
+    res.json(staff.toClient());
+  } catch (err) {
+    console.error('Error approving staff:', err);
+    res.status(500).json({ error: 'Failed to approve staff' });
+  }
+});
+
+// Reject staff registration with a required reason
+router.patch('/staff/:id/reject', async (req, res) => {
+  try {
+    const { actorRole, rejectionReason } = req.body;
+    if (actorRole !== 'office' && actorRole !== 'admin') {
+      return res.status(403).json({ error: 'Only office/admin can reject staff.' });
+    }
+    if (!rejectionReason || !String(rejectionReason).trim()) {
+      return res.status(400).json({ error: 'Rejection reason is required.' });
+    }
+
+    const staff = await User.findById(req.params.id);
+    if (!staff || staff.role !== 'staff') {
+      return res.status(404).json({ error: 'Staff not found' });
+    }
+
+    staff.staffApproved = false;
+    staff.staffRejected = true;
+    staff.staffRejectionReason = String(rejectionReason).trim();
+    await staff.save();
+
+    res.json(staff.toClient());
+  } catch (err) {
+    console.error('Error rejecting staff:', err);
+    res.status(500).json({ error: 'Failed to reject staff' });
   }
 });
 

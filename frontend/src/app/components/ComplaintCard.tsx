@@ -157,6 +157,53 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
             <p className="text-xs text-red-600">{complaint.rejectionReason}</p>
           </div>
         )}
+
+        {complaint.status === 'resolved' &&
+          (Boolean(complaint.resolutionDescription) ||
+            (complaint.resolutionAttachments && complaint.resolutionAttachments.length > 0)) && (
+            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md space-y-2">
+              <p className="text-xs font-semibold text-green-700">How this complaint was fixed:</p>
+
+              {complaint.resolutionDescription && (
+                <p className="text-xs text-green-700 whitespace-pre-wrap">{complaint.resolutionDescription}</p>
+              )}
+
+              {complaint.resolutionAttachments && complaint.resolutionAttachments.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-green-700">Resolution Files:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {complaint.resolutionAttachments.map((att) =>
+                      att.type === 'image' ? (
+                        <a
+                          key={att.url}
+                          href={`${API_BASE}${att.url}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block"
+                        >
+                          <ImageWithFallback
+                            src={`${API_BASE}${att.url}`}
+                            alt={att.originalName}
+                            className="h-16 w-16 object-cover rounded border"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          key={att.url}
+                          href={`${API_BASE}${att.url}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-blue-700 underline"
+                        >
+                          {att.originalName || 'Resolution file'}
+                        </a>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
       </CardContent>
     </Card>
   );

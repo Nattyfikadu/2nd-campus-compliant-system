@@ -2,18 +2,13 @@ import { Link, useLocation } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { CheckCircle2 } from 'lucide-react';
-import { ModeToggle } from '@/app/components/mode-toggle';
 
 export function ThankYouPage() {
   const location = useLocation();
   const trackingCode = (location.state as any)?.trackingCode as string | undefined;
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-4 transition-colors duration-300">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
-
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center space-y-2">
           <div className="flex justify-center">

@@ -6,9 +6,6 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
-import { GraduationCap } from 'lucide-react';
-import { ModeToggle } from '@/app/components/mode-toggle';
-
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,28 +17,29 @@ export function LoginPage() {
     e.preventDefault();
     setError('');
 
-    const success = await login(email, password);
-    if (success) {
+    const result = await login(email, password);
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('Invalid email or password');
+      setError(result.error || 'Invalid email or password');
     }
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-4 transition-colors duration-300">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
             <div className="size-16 rounded-full bg-blue-600 flex items-center justify-center">
-              <GraduationCap className="size-8 text-white" />
+              <img
+                src="/assets/log.png"
+                alt="Campus logo"
+                className="size-12 rounded-full object-cover"
+              />
             </div>
           </div>
           <div>
-            <CardTitle className="text-2xl">Campus Complaint System</CardTitle>
+            <CardTitle className="text-2xl">Campus Service Complaint System</CardTitle>
             <CardDescription>Sign in to submit and track your complaints</CardDescription>
           </div>
         </CardHeader>

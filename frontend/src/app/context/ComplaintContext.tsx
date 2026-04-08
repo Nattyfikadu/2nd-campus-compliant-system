@@ -45,10 +45,22 @@ export interface Complaint {
     id: string;
     name: string;
   };
+  supportStaff?: {
+    id: string;
+    name: string;
+  }[];
   createdAt: Date;
   updatedAt: Date;
   resolvedAt?: Date;
   rejectionReason?: string;
+  escalationType?: 'unavailable' | 'beyond-skill';
+  escalationReason?: string;
+  escalationReportedBy?: {
+    id: string;
+    name: string;
+  };
+  resolutionDescription?: string;
+  resolutionAttachments?: Attachment[];
   attachments?: Attachment[];
 }
 
@@ -61,7 +73,13 @@ interface ComplaintContextType {
     id: string,
     status: ComplaintStatus,
     assignedTo?: { id: string; name: string },
-    rejectionReason?: string
+    rejectionReason?: string,
+    resolutionDescription?: string,
+    resolutionAttachments?: Attachment[],
+    escalationType?: 'unavailable' | 'beyond-skill',
+    escalationReason?: string,
+    escalationReportedBy?: { id: string; name: string },
+    supportStaffAdd?: { id: string; name: string }
   ) => void;
   getComplaintsByUser: (userId: string) => Complaint[];
   getComplaintsByStatus: (status: ComplaintStatus) => Complaint[];
@@ -94,6 +112,19 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     reloadComplaints();
+    const intervalId = window.setInterval(() => {
+      reloadComplaints();
+    }, 10000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        reloadComplaints();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -132,7 +163,13 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     id: string,
     status: ComplaintStatus,
     assignedTo?: { id: string; name: string },
-    rejectionReason?: string
+    rejectionReason?: string,
+    resolutionDescription?: string,
+    resolutionAttachments?: Attachment[],
+    escalationType?: 'unavailable' | 'beyond-skill',
+    escalationReason?: string,
+    escalationReportedBy?: { id: string; name: string },
+    supportStaffAdd?: { id: string; name: string }
   ) => {
     try {
       const res = await fetch(`http://localhost:4000/api/complaints/${id}/status`, {
@@ -142,6 +179,12 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
           status,
           assignedTo,
           rejectionReason,
+          resolutionDescription,
+          resolutionAttachments,
+          escalationType,
+          escalationReason,
+          escalationReportedBy,
+          supportStaffAdd,
         }),
       });
 

@@ -14,15 +14,24 @@ export interface User {
   staffId?: string;
   phone?: string;
   position?: string;
+  staffLocations?: string[];
+  staffApproved?: boolean;
+  staffRejected?: boolean;
+  staffRejectionReason?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    userData: RegisterData
+  ) => Promise<{ success: boolean; error?: string; requiresApproval?: boolean }>;
   logout: () => void;
   isAuthenticated: boolean;
-  getAllStaff: () => Promise<User[]>;
+  getAllStaff: (location?: string) => Promise<User[]>;
+  getPendingStaff: () => Promise<User[]>;
+  approveStaff: (staffId: string) => Promise<boolean>;
+  rejectStaff: (staffId: string, rejectionReason: string) => Promise<boolean>;
 }
 
 export interface RegisterData {
@@ -36,6 +45,7 @@ export interface RegisterData {
   department?: string;
   faculty?: string;
   position?: string;
+  staffLocations?: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,7 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const res = await fetch('http://localhost:4000/api/auth/login', {
         method: 'POST',
@@ -65,9 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        console.error('Login failed:', data.error);
-        return false;
+        const data = await res.json().catch(() => null);
+        return { success: false, error: data?.error || 'Login failed' };
       }
 
       const data = await res.json();
@@ -77,14 +89,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
-      return true;
+      return { success: true };
     } catch (err) {
       console.error('Login error:', err);
-      return false;
+      return { success: false, error: 'Network error. Please try again.' };
     }
   };
 
-  const register = async (userData: RegisterData): Promise<{ success: boolean; error?: string }> => {
+  const register = async (
+    userData: RegisterData
+  ): Promise<{ success: boolean; error?: string; requiresApproval?: boolean }> => {
     try {
       const res = await fetch('http://localhost:4000/api/auth/register', {
         method: 'POST',
@@ -102,6 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...data.user,
         name: data.user.fullName, // For backward compatibility
       };
+      // For staff: do NOT auto-login until office/admin approves.
+      if (userData.role === 'staff' && !data.user.staffApproved) {
+        return { success: true, requiresApproval: true };
+      }
+
       setUser(newUser);
       localStorage.setItem('user', JSON.stringify(newUser));
       return { success: true };
@@ -116,9 +135,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
   };
 
-  const getAllStaff = async (): Promise<User[]> => {
+  const getAllStaff = async (location?: string): Promise<User[]> => {
     try {
-      const res = await fetch('http://localhost:4000/api/auth/staff');
+      const url = location
+        ? `http://localhost:4000/api/auth/staff?location=${encodeURIComponent(location)}`
+        : 'http://localhost:4000/api/auth/staff';
+      const res = await fetch(url);
       if (!res.ok) {
         return [];
       }
@@ -129,8 +151,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getPendingStaff = async (): Promise<User[]> => {
+    try {
+      const res = await fetch('http://localhost:4000/api/auth/staff/pending');
+      if (!res.ok) return [];
+      return await res.json();
+    } catch (err) {
+      console.error('Fetch pending staff error:', err);
+      return [];
+    }
+  };
+
+  const approveStaff = async (staffId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/auth/staff/${staffId}/approve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actorRole: user?.role }),
+      });
+      if (!res.ok) return false;
+      return true;
+    } catch (err) {
+      console.error('Approve staff error:', err);
+      return false;
+    }
+  };
+
+  const rejectStaff = async (staffId: string, rejectionReason: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/auth/staff/${staffId}/reject`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actorRole: user?.role,
+          rejectionReason,
+        }),
+      });
+      if (!res.ok) return false;
+      return true;
+    } catch (err) {
+      console.error('Reject staff error:', err);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user, getAllStaff }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+        getAllStaff,
+        getPendingStaff,
+        approveStaff,
+        rejectStaff,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

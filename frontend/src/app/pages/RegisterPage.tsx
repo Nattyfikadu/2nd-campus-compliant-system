@@ -6,8 +6,8 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
+import { Checkbox } from '@/app/components/ui/checkbox';
 import { GraduationCap, UserPlus, Building2 } from 'lucide-react';
-import { ModeToggle } from '@/app/components/mode-toggle';
 
 const initialFormData = {
   fullName: '',
@@ -20,6 +20,7 @@ const initialFormData = {
   department: '',
   faculty: '',
   position: '',
+  staffLocations: [] as string[],
 };
 
 export function RegisterPage() {
@@ -30,6 +31,17 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  const staffLocationLabels: Record<string, string> = {
+    cafeteria: 'Cafeteria',
+    dormitory: 'Dormitory',
+    registrar: 'Registrar Office',
+    'hr-office': 'HR Office',
+    faculty: 'Faculty Building',
+    library: 'Library',
+  };
+
+  const staffLocationValues = Object.keys(staffLocationLabels);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -78,6 +90,12 @@ export function RegisterPage() {
       return;
     }
 
+    if (role === 'staff' && (!formData.staffLocations || formData.staffLocations.length === 0)) {
+      setError('Please select at least one working location for staff.');
+      setLoading(false);
+      return;
+    }
+
     // Register
     const registerData = {
       fullName: formData.fullName,
@@ -86,6 +104,7 @@ export function RegisterPage() {
       role,
       studentId: role === 'student' ? formData.studentId : undefined,
       staffId: role === 'staff' ? formData.staffId : undefined,
+      staffLocations: role === 'staff' ? formData.staffLocations : undefined,
       phone: formData.phone || undefined,
       department: formData.department || undefined,
       faculty: formData.faculty || undefined,
@@ -96,7 +115,16 @@ export function RegisterPage() {
     setLoading(false);
 
     if (result.success) {
-      navigate('/dashboard');
+      if (role === 'staff') {
+        if (result.requiresApproval) {
+          setError('Your staff account is submitted for approval. Please login later after office/admin approves.');
+          navigate('/');
+          return;
+        }
+        navigate('/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.error || 'Registration failed');
     }
@@ -125,10 +153,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-4 transition-colors duration-300">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
@@ -258,6 +283,36 @@ export function RegisterPage() {
                   value={formData.position}
                   onChange={(e) => handleChange('position', e.target.value)}
                 />
+              </div>
+            )}
+
+            {/* Staff working locations (required for staff) */}
+            {role === 'staff' && (
+              <div className="space-y-2">
+                <Label>Working Locations *</Label>
+                <div className="flex flex-wrap gap-4">
+                  {staffLocationValues.map((loc) => {
+                    const checked = formData.staffLocations.includes(loc);
+                    return (
+                      <label key={loc} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) => {
+                            const isChecked = v === true;
+                            setFormData((prev) => {
+                              const set = new Set(prev.staffLocations);
+                              if (isChecked) set.add(loc);
+                              else set.delete(loc);
+                              return { ...prev, staffLocations: Array.from(set) };
+                            });
+                            setError('');
+                          }}
+                        />
+                        <span>{staffLocationLabels[loc]}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

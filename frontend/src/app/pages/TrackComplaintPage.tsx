@@ -6,7 +6,6 @@ import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { Badge } from '@/app/components/ui/badge';
-import { ModeToggle } from '@/app/components/mode-toggle';
 
 const API_BASE = 'http://localhost:4000';
 
@@ -45,11 +44,7 @@ export function TrackComplaintPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-4 transition-colors duration-300">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
-
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>Check Complaint Status</CardTitle>

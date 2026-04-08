@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { ComplaintLocation, IssueType } from '@/app/context/ComplaintContext';
 import { FileText, Loader2 } from 'lucide-react';
-import { ModeToggle } from '@/app/components/mode-toggle';
 
 const API_BASE = 'http://localhost:4000';
 
@@ -85,10 +84,7 @@ export function AnonymousComplaintPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-4 transition-colors duration-300">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-2">
           <CardTitle className="flex items-center gap-2">

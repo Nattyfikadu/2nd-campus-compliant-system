@@ -19,6 +19,14 @@ const UserSchema = new mongoose.Schema(
     // Staff-specific fields
     staffId: { type: String, sparse: true }, // Only for staff
     position: { type: String }, // Job title/position for staff
+    staffLocations: {
+      type: [String],
+      enum: ['cafeteria', 'dormitory', 'registrar', 'hr-office', 'faculty', 'library'],
+      default: [],
+    },
+    staffApproved: { type: Boolean, default: false }, // Only applies to role='staff'
+    staffRejected: { type: Boolean, default: false }, // Only applies to role='staff'
+    staffRejectionReason: { type: String }, // Only applies to role='staff'
     // Visitor-specific (minimal)
     // They can optionally provide email/phone for notifications
   },

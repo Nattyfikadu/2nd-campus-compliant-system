@@ -180,15 +180,52 @@ router.get('/track/:trackingCode', async (req, res) => {
 // Update complaint status / assignment / rejection
 router.patch('/:id/status', async (req, res) => {
   try {
-    const { status, assignedTo, rejectionReason } = req.body;
+    const {
+      status,
+      assignedTo,
+      rejectionReason,
+      resolutionDescription,
+      resolutionAttachments,
+      escalationType,
+      escalationReason,
+      escalationReportedBy,
+      supportStaffAdd,
+    } = req.body;
     if (!status) {
       return res.status(400).json({ error: 'Status is required' });
     }
 
-    const update = {
-      status,
-      rejectionReason: status === 'rejected' ? rejectionReason : undefined,
-    };
+    const update = { status };
+
+    // Only update optional fields when they are explicitly provided.
+    // This prevents clearing escalation data when office/admin adds support staff.
+    if (rejectionReason !== undefined) {
+      update.rejectionReason = rejectionReason;
+    } else if (status !== 'rejected') {
+      update.rejectionReason = undefined;
+    }
+
+    if (resolutionDescription !== undefined) {
+      update.resolutionDescription = resolutionDescription;
+    } else if (status !== 'resolved') {
+      update.resolutionDescription = undefined;
+    }
+
+    if (resolutionAttachments !== undefined) {
+      update.resolutionAttachments = resolutionAttachments;
+    } else if (status !== 'resolved') {
+      update.resolutionAttachments = undefined;
+    }
+
+    if (escalationType !== undefined) {
+      update.escalationType = escalationType;
+    }
+    if (escalationReason !== undefined) {
+      update.escalationReason = escalationReason;
+    }
+    if (escalationReportedBy !== undefined) {
+      update.escalationReportedBy = escalationReportedBy;
+    }
 
     if (assignedTo) {
       update.assignedTo = assignedTo;
@@ -198,9 +235,19 @@ router.patch('/:id/status', async (req, res) => {
       update.resolvedAt = new Date();
     }
 
-    const updated = await Complaint.findByIdAndUpdate(req.params.id, update, {
+    let updated = await Complaint.findByIdAndUpdate(req.params.id, update, {
       new: true,
     });
+
+    // Add support staff without replacing existing assigned staff
+    if (updated && supportStaffAdd && supportStaffAdd.id && supportStaffAdd.name) {
+      const existsInSupport = (updated.supportStaff || []).some((s) => s.id === supportStaffAdd.id);
+      const isPrimaryAssignee = updated.assignedTo && updated.assignedTo.id === supportStaffAdd.id;
+      if (!existsInSupport && !isPrimaryAssignee) {
+        updated.supportStaff = [...(updated.supportStaff || []), supportStaffAdd];
+        await updated.save();
+      }
+    }
 
     if (!updated) {
       return res.status(404).json({ error: 'Complaint not found' });
