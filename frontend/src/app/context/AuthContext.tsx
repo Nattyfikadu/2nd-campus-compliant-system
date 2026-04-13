@@ -6,7 +6,7 @@ export type UserRole = 'student' | 'visitor' | 'staff' | 'office' | 'admin';
 export interface User {
   id: string;
   fullName: string;
-  name?: string; // For backward compatibility
+  name?: string;
   email: string;
   role: UserRole;
   department?: string;
@@ -24,9 +24,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (
-    userData: RegisterData
-  ) => Promise<{ success: boolean; error?: string; requiresApproval?: boolean }>;
+  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string; requiresApproval?: boolean }>;
   logout: () => void;
   isAuthenticated: boolean;
   getAllStaff: (location?: string) => Promise<User[]>;
@@ -54,79 +52,58 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  // Load user from localStorage on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
-      } catch (err) {
-        console.error('Failed to load user from localStorage', err);
+      } catch {
         localStorage.removeItem('user');
       }
     }
   }, []);
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('${API_BASE}/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         return { success: false, error: data?.error || 'Login failed' };
       }
-
       const data = await res.json();
-      const userData = {
-        ...data.user,
-        name: data.user.fullName, // For backward compatibility
-      };
+      const userData = { ...data.user, name: data.user.fullName };
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       return { success: true };
-    } catch (err) {
-      console.error('Login error:', err);
+    } catch {
       return { success: false, error: 'Network error. Please try again.' };
     }
   };
 
-  const register = async (
-    userData: RegisterData
-  ): Promise<{ success: boolean; error?: string; requiresApproval?: boolean }> => {
+  const register = async (userData: RegisterData): Promise<{ success: boolean; error?: string; requiresApproval?: boolean }> => {
     try {
-      const res = await fetch('${API_BASE}/api/auth/register', {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
-
       if (!res.ok) {
         const data = await res.json();
         return { success: false, error: data.error || 'Registration failed' };
       }
-
       const data = await res.json();
-      const newUser = {
-        ...data.user,
-        name: data.user.fullName, // For backward compatibility
-      };
-      // For staff: do NOT auto-login until office/admin approves.
+      const newUser = { ...data.user, name: data.user.fullName };
       if (userData.role === 'staff' && !data.user.staffApproved) {
         return { success: true, requiresApproval: true };
       }
-
       setUser(newUser);
       localStorage.setItem('user', JSON.stringify(newUser));
       return { success: true };
-    } catch (err) {
-      console.error('Registration error:', err);
+    } catch {
       return { success: false, error: 'Network error. Please try again.' };
     }
   };
@@ -140,25 +117,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const url = location
         ? `${API_BASE}/api/auth/staff?location=${encodeURIComponent(location)}`
-        : '${API_BASE}/api/auth/staff';
+        : `${API_BASE}/api/auth/staff`;
       const res = await fetch(url);
-      if (!res.ok) {
-        return [];
-      }
+      if (!res.ok) return [];
       return await res.json();
-    } catch (err) {
-      console.error('Fetch staff error:', err);
+    } catch {
       return [];
     }
   };
 
   const getPendingStaff = async (): Promise<User[]> => {
     try {
-      const res = await fetch('${API_BASE}/api/auth/staff/pending');
+      const res = await fetch(`${API_BASE}/api/auth/staff/pending`);
       if (!res.ok) return [];
       return await res.json();
-    } catch (err) {
-      console.error('Fetch pending staff error:', err);
+    } catch {
       return [];
     }
   };
@@ -170,10 +143,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actorRole: user?.role }),
       });
-      if (!res.ok) return false;
-      return true;
-    } catch (err) {
-      console.error('Approve staff error:', err);
+      return res.ok;
+    } catch {
       return false;
     }
   };
@@ -183,33 +154,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch(`${API_BASE}/api/auth/staff/${staffId}/reject`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          actorRole: user?.role,
-          rejectionReason,
-        }),
+        body: JSON.stringify({ actorRole: user?.role, rejectionReason }),
       });
-      if (!res.ok) return false;
-      return true;
-    } catch (err) {
-      console.error('Reject staff error:', err);
+      return res.ok;
+    } catch {
       return false;
     }
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user,
-        getAllStaff,
-        getPendingStaff,
-        approveStaff,
-        rejectStaff,
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user, getAllStaff, getPendingStaff, approveStaff, rejectStaff }}>
       {children}
     </AuthContext.Provider>
   );
@@ -217,8 +171,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }

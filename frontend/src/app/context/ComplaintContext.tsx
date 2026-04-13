@@ -103,7 +103,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
 
   const reloadComplaints = async () => {
     try {
-      const res = await fetch('${API_BASE}/api/complaints');
+      const res = await fetch(`${API_BASE}/api/complaints`);
       const json = await res.json();
       // API returns { data: [], pagination: {} } — handle both shapes
       const list = Array.isArray(json) ? json : (json.data ?? []);
@@ -135,7 +135,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>
   ): Promise<Complaint | null> => {
     try {
-      const res = await fetch('${API_BASE}/api/complaints', {
+      const res = await fetch(`${API_BASE}/api/complaints`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
