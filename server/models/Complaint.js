@@ -86,6 +86,12 @@ const ComplaintSchema = new mongoose.Schema(
   }
 );
 
+// Indexes for fast querying under load
+ComplaintSchema.index({ 'submittedBy.id': 1, createdAt: -1 });
+ComplaintSchema.index({ 'assignedTo.id': 1, createdAt: -1 });
+ComplaintSchema.index({ status: 1, createdAt: -1 });
+ComplaintSchema.index({ trackingCode: 1 }, { unique: true, sparse: true });
+
 // Shape documents for the frontend (id instead of _id)
 ComplaintSchema.method('toClient', function () {
   const obj = this.toObject({ versionKey: false });

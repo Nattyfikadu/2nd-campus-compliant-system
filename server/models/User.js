@@ -36,8 +36,10 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Index for studentId uniqueness (only for students)
-// UserSchema.index({ studentId: 1 }, { unique: true, sparse: true });
-// UserSchema.index({ staffId: 1 }, { unique: true, sparse: true });
+UserSchema.index({ studentId: 1 }, { unique: true, sparse: true });
+UserSchema.index({ staffId: 1 }, { unique: true, sparse: true });
+UserSchema.index({ email: 1 });
+UserSchema.index({ role: 1, staffApproved: 1, staffRejected: 1 });
 
 // Hash password before saving
 UserSchema.pre('save', async function () {

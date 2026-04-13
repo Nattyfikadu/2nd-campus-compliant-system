@@ -29,11 +29,22 @@ function generateTrackingCode() {
   return `CMP-${num}`;
 }
 
-// Get all complaints
+// Get all complaints (paginated)
 router.get('/', async (req, res) => {
   try {
-    const docs = await Complaint.find().sort({ createdAt: -1 });
-    res.json(docs.map((c) => c.toClient()));
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      Complaint.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Complaint.countDocuments(),
+    ]);
+
+    res.json({
+      data: docs.map((c) => ({ ...c, id: c._id.toString(), _id: undefined })),
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     console.error('Error fetching complaints:', err);
     res.status(500).json({ error: 'Failed to fetch complaints' });
@@ -43,10 +54,10 @@ router.get('/', async (req, res) => {
 // Get complaints by submitter
 router.get('/user/:userId', async (req, res) => {
   try {
-    const docs = await Complaint.find({ 'submittedBy.id': req.params.userId }).sort({
-      createdAt: -1,
-    });
-    res.json(docs.map((c) => c.toClient()));
+    const docs = await Complaint.find({ 'submittedBy.id': req.params.userId })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(docs.map((c) => ({ ...c, id: c._id.toString(), _id: undefined })));
   } catch (err) {
     console.error('Error fetching user complaints:', err);
     res.status(500).json({ error: 'Failed to fetch user complaints' });
@@ -56,10 +67,10 @@ router.get('/user/:userId', async (req, res) => {
 // Get complaints by assignee
 router.get('/assignee/:assigneeId', async (req, res) => {
   try {
-    const docs = await Complaint.find({ 'assignedTo.id': req.params.assigneeId }).sort({
-      createdAt: -1,
-    });
-    res.json(docs.map((c) => c.toClient()));
+    const docs = await Complaint.find({ 'assignedTo.id': req.params.assigneeId })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(docs.map((c) => ({ ...c, id: c._id.toString(), _id: undefined })));
   } catch (err) {
     console.error('Error fetching assignee complaints:', err);
     res.status(500).json({ error: 'Failed to fetch assignee complaints' });
