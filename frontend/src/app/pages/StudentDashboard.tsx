@@ -4,62 +4,175 @@ import { useComplaints } from '@/app/context/ComplaintContext';
 import { ComplaintForm } from '@/app/components/ComplaintForm';
 import { ComplaintCard } from '@/app/components/ComplaintCard';
 import { Button } from '@/app/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { PlusCircle, FileText, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/app/components/ui/card';
+import {
+  PlusCircle,
+  FileText,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  TrendingUp,
+} from 'lucide-react';
+
+type FilterKey = 'all' | 'pending' | 'in-progress' | 'resolved' | 'rejected';
 
 export function StudentDashboard() {
   const { user } = useAuth();
-  const { complaints, getComplaintsByUser } = useComplaints();
+  const { getComplaintsByUser } = useComplaints();
   const [showForm, setShowForm] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
 
   if (!user) return null;
 
   const userComplaints = getComplaintsByUser(user.id);
   const pendingCount = userComplaints.filter(c => c.status === 'pending').length;
-  const approvedCount = userComplaints.filter(c => c.status === 'approved').length;
   const inProgressCount = userComplaints.filter(c => c.status === 'in-progress').length;
   const resolvedCount = userComplaints.filter(c => c.status === 'resolved').length;
   const rejectedCount = userComplaints.filter(c => c.status === 'rejected').length;
 
-  const stats = [
-    { label: 'Total Complaints', value: userComplaints.length, icon: FileText, color: 'bg-blue-100 text-blue-700' },
-    { label: 'Pending', value: pendingCount, icon: Clock, color: 'bg-yellow-100 text-yellow-700' },
-    { label: 'In Progress', value: inProgressCount, icon: AlertCircle, color: 'bg-purple-100 text-purple-700' },
-    { label: 'Resolved', value: resolvedCount, icon: CheckCircle2, color: 'bg-green-100 text-green-700' },
+  const stats: {
+    key: FilterKey;
+    label: string;
+    value: number;
+    icon: React.ElementType;
+    iconBg: string;
+    iconColor: string;
+    border: string;
+    accent: string;
+    activeBg: string;
+    trend?: string;
+  }[] = [
+    {
+      key: 'all',
+      label: 'Total Submitted',
+      value: userComplaints.length,
+      icon: FileText,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      border: 'border-blue-200',
+      accent: 'from-blue-50 to-white',
+      activeBg: 'ring-2 ring-blue-400',
+    },
+    {
+      key: 'pending',
+      label: 'Pending Review',
+      value: pendingCount,
+      icon: Clock,
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      border: 'border-amber-200',
+      accent: 'from-amber-50 to-white',
+      activeBg: 'ring-2 ring-amber-400',
+    },
+    {
+      key: 'in-progress',
+      label: 'In Progress',
+      value: inProgressCount,
+      icon: AlertCircle,
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600',
+      border: 'border-purple-200',
+      accent: 'from-purple-50 to-white',
+      activeBg: 'ring-2 ring-purple-400',
+    },
+    {
+      key: 'resolved',
+      label: 'Resolved',
+      value: resolvedCount,
+      icon: CheckCircle2,
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+      border: 'border-emerald-200',
+      accent: 'from-emerald-50 to-white',
+      activeBg: 'ring-2 ring-emerald-400',
+      trend: resolvedCount > 0 && userComplaints.length > 0
+        ? `${Math.round((resolvedCount / userComplaints.length) * 100)}% resolution rate`
+        : undefined,
+    },
+    {
+      key: 'rejected',
+      label: 'Rejected',
+      value: rejectedCount,
+      icon: XCircle,
+      iconBg: 'bg-red-100',
+      iconColor: 'text-red-600',
+      border: 'border-red-200',
+      accent: 'from-red-50 to-white',
+      activeBg: 'ring-2 ring-red-400',
+    },
   ];
 
+  const filteredComplaints = activeFilter === 'all'
+    ? userComplaints
+    : userComplaints.filter(c => c.status === activeFilter);
+
+  const activeLabel = stats.find(s => s.key === activeFilter)?.label ?? 'All';
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Welcome, {user.fullName || user.name}</h1>
-          <p className="text-muted-foreground mt-1">Manage and track your campus complaints</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome back, {user.fullName || user.name}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Here's an overview of your submitted complaints
+          </p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} size="lg">
-          <PlusCircle className="size-4 mr-2" />
-          {showForm ? 'View Complaints' : 'New Complaint'}
+        <Button
+          onClick={() => setShowForm(!showForm)}
+          size="lg"
+          className="gap-2 shadow-sm hover:shadow-md transition-shadow"
+        >
+          <PlusCircle className="size-4" />
+          {showForm ? 'View My Complaints' : 'New Complaint'}
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stat Cards — click to filter */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
+          const isActive = activeFilter === stat.key;
           return (
-            <Card key={stat.label}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
+            <Card
+              key={stat.key}
+              onClick={() => { setShowForm(false); setActiveFilter(stat.key); }}
+              className={`
+                group relative overflow-hidden border ${stat.border}
+                bg-gradient-to-br ${stat.accent}
+                shadow-sm hover:shadow-lg
+                transition-all duration-300 ease-in-out
+                hover:-translate-y-1 cursor-pointer select-none
+                ${isActive ? stat.activeBg : ''}
+              `}
+            >
+              <CardContent className="pt-5 pb-4 px-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {stat.label}
+                    </p>
+                    <p className="text-4xl font-bold text-gray-900 leading-none">
+                      {stat.value}
+                    </p>
+                    {stat.trend && (
+                      <p className="text-xs text-emerald-600 flex items-center gap-1 pt-1">
+                        <TrendingUp className="size-3" />
+                        {stat.trend}
+                      </p>
+                    )}
                   </div>
-                  <div className={`size-12 rounded-full ${stat.color} flex items-center justify-center`}>
-                    <Icon className="size-6" />
+                  <div className={`size-11 rounded-xl ${stat.iconBg} flex items-center justify-center
+                    group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className={`size-5 ${stat.iconColor}`} />
                   </div>
                 </div>
               </CardContent>
+              <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${stat.iconBg} opacity-60`} />
             </Card>
           );
         })}
@@ -69,105 +182,40 @@ export function StudentDashboard() {
       {showForm ? (
         <ComplaintForm onSuccess={() => setShowForm(false)} />
       ) : (
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">All ({userComplaints.length})</TabsTrigger>
-            <TabsTrigger value="pending">Pending ({pendingCount})</TabsTrigger>
-            <TabsTrigger value="in-progress">In Progress ({inProgressCount})</TabsTrigger>
-            <TabsTrigger value="resolved">Resolved ({resolvedCount})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({rejectedCount})</TabsTrigger>
-          </TabsList>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Showing: <span className="font-medium text-gray-700">{activeLabel}</span>
+            {' '}({filteredComplaints.length})
+          </p>
 
-          <TabsContent value="all" className="space-y-4">
-            {userComplaints.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <FileText className="size-12 text-muted-foreground opacity-50 mb-3" />
-                  <h3 className="font-semibold text-lg mb-1">No complaints yet</h3>
-                  <p className="text-muted-foreground text-sm mb-4">Click "New Complaint" to submit your first issue</p>
-                  <Button onClick={() => setShowForm(true)}>
-                    <PlusCircle className="size-4 mr-2" />
+          {filteredComplaints.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="size-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <FileText className="size-7 text-muted-foreground opacity-60" />
+                </div>
+                <h3 className="font-semibold text-lg mb-1">No complaints found</h3>
+                <p className="text-muted-foreground text-sm mb-5">
+                  {activeFilter === 'all'
+                    ? 'Submit your first complaint to get started'
+                    : `No complaints with status "${activeLabel.toLowerCase()}"`}
+                </p>
+                {activeFilter === 'all' && (
+                  <Button onClick={() => setShowForm(true)} className="gap-2">
+                    <PlusCircle className="size-4" />
                     Submit Your First Complaint
                   </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {userComplaints.map((complaint) => (
-                  <ComplaintCard key={complaint.id} complaint={complaint} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="pending" className="space-y-4">
+                )}
+              </CardContent>
+            </Card>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {userComplaints
-                .filter(c => c.status === 'pending')
-                .map((complaint) => (
-                  <ComplaintCard key={complaint.id} complaint={complaint} />
-                ))}
+              {filteredComplaints.map((complaint) => (
+                <ComplaintCard key={complaint.id} complaint={complaint} />
+              ))}
             </div>
-            {pendingCount === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  No pending complaints
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="in-progress" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {userComplaints
-                .filter(c => c.status === 'in-progress')
-                .map((complaint) => (
-                  <ComplaintCard key={complaint.id} complaint={complaint} />
-                ))}
-            </div>
-            {inProgressCount === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  No complaints in progress
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="resolved" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {userComplaints
-                .filter(c => c.status === 'resolved')
-                .map((complaint) => (
-                  <ComplaintCard key={complaint.id} complaint={complaint} />
-                ))}
-            </div>
-            {resolvedCount === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  No resolved complaints
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="rejected" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {userComplaints
-                .filter(c => c.status === 'rejected')
-                .map((complaint) => (
-                  <ComplaintCard key={complaint.id} complaint={complaint} />
-                ))}
-            </div>
-            {rejectedCount === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  No rejected complaints
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       )}
     </div>
   );

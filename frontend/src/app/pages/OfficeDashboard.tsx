@@ -10,46 +10,40 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/app/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import { FileText, Clock, CheckCircle2, XCircle, UserCheck } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, XCircle, UserCheck, AlertCircle } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Textarea } from '@/app/components/ui/textarea';
 
+type FilterKey = 'pending' | 'approved' | 'in-progress' | 'resolved' | 'rejected';
+
+const locationLabels: Record<string, string> = {
+  cafeteria: 'Cafeteria',
+  dormitory: 'Dormitory',
+  registrar: 'Registrar Office',
+  'hr-office': 'HR Office',
+  faculty: 'Faculty Building',
+  library: 'Library',
+};
+
 export function OfficeDashboard() {
   const { user, getPendingStaff, approveStaff, rejectStaff } = useAuth();
-  const { complaints, getComplaintsByStatus } = useComplaints();
-
-  if (!user) return null;
-
+  const { getComplaintsByStatus } = useComplaints();
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('pending');
   const [pendingStaff, setPendingStaff] = useState<any[]>([]);
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
 
-  const locationLabels: Record<string, string> = {
-    cafeteria: 'Cafeteria',
-    dormitory: 'Dormitory',
-    registrar: 'Registrar Office',
-    'hr-office': 'HR Office',
-    faculty: 'Faculty Building',
-    library: 'Library',
-  };
+  if (!user) return null;
 
   useEffect(() => {
-    const load = async () => {
-      const staff = await getPendingStaff();
-      setPendingStaff(staff);
-    };
-    load();
+    getPendingStaff().then(setPendingStaff);
   }, [getPendingStaff]);
 
   const handleApproveStaff = async (staffId: string) => {
     const ok = await approveStaff(staffId);
-    if (!ok) return;
-    const staff = await getPendingStaff();
-    setPendingStaff(staff);
+    if (ok) getPendingStaff().then(setPendingStaff);
   };
 
   const handleOpenReject = (staffId: string) => {
@@ -59,12 +53,10 @@ export function OfficeDashboard() {
   };
 
   const handleConfirmReject = async () => {
-    if (!rejectTargetId) return;
-    if (!rejectReason.trim()) return;
+    if (!rejectTargetId || !rejectReason.trim()) return;
     const ok = await rejectStaff(rejectTargetId, rejectReason);
     if (!ok) return;
-    const staff = await getPendingStaff();
-    setPendingStaff(staff);
+    getPendingStaff().then(setPendingStaff);
     setShowRejectDialog(false);
     setRejectTargetId(null);
     setRejectReason('');
@@ -76,237 +68,222 @@ export function OfficeDashboard() {
   const resolvedComplaints = getComplaintsByStatus('resolved');
   const rejectedComplaints = getComplaintsByStatus('rejected');
 
-  const stats = [
-    { label: 'Pending Review', value: pendingComplaints.length, icon: Clock, color: 'bg-yellow-100 text-yellow-700' },
-    { label: 'Approved', value: approvedComplaints.length, icon: CheckCircle2, color: 'bg-blue-100 text-blue-700' },
-    { label: 'In Progress', value: inProgressComplaints.length, icon: UserCheck, color: 'bg-purple-100 text-purple-700' },
-    { label: 'Resolved', value: resolvedComplaints.length, icon: CheckCircle2, color: 'bg-green-100 text-green-700' },
+  const stats: {
+    key: FilterKey;
+    label: string;
+    value: number;
+    icon: React.ElementType;
+    iconBg: string;
+    iconColor: string;
+    border: string;
+    accent: string;
+    activeBg: string;
+  }[] = [
+    {
+      key: 'pending',
+      label: 'Pending Review',
+      value: pendingComplaints.length,
+      icon: Clock,
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      border: 'border-amber-200',
+      accent: 'from-amber-50 to-white',
+      activeBg: 'ring-2 ring-amber-400',
+    },
+    {
+      key: 'approved',
+      label: 'Approved',
+      value: approvedComplaints.length,
+      icon: CheckCircle2,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      border: 'border-blue-200',
+      accent: 'from-blue-50 to-white',
+      activeBg: 'ring-2 ring-blue-400',
+    },
+    {
+      key: 'in-progress',
+      label: 'In Progress',
+      value: inProgressComplaints.length,
+      icon: AlertCircle,
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600',
+      border: 'border-purple-200',
+      accent: 'from-purple-50 to-white',
+      activeBg: 'ring-2 ring-purple-400',
+    },
+    {
+      key: 'resolved',
+      label: 'Resolved',
+      value: resolvedComplaints.length,
+      icon: CheckCircle2,
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+      border: 'border-emerald-200',
+      accent: 'from-emerald-50 to-white',
+      activeBg: 'ring-2 ring-emerald-400',
+    },
+    {
+      key: 'rejected',
+      label: 'Rejected',
+      value: rejectedComplaints.length,
+      icon: XCircle,
+      iconBg: 'bg-red-100',
+      iconColor: 'text-red-600',
+      border: 'border-red-200',
+      accent: 'from-red-50 to-white',
+      activeBg: 'ring-2 ring-red-400',
+    },
   ];
 
+  const complaintMap: Record<FilterKey, typeof pendingComplaints> = {
+    pending: pendingComplaints,
+    approved: approvedComplaints,
+    'in-progress': inProgressComplaints,
+    resolved: resolvedComplaints,
+    rejected: rejectedComplaints,
+  };
+
+  const filteredComplaints = complaintMap[activeFilter];
+  const activeLabel = stats.find(s => s.key === activeFilter)?.label ?? '';
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Office Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Review, approve, and assign complaints</p>
+        <h1 className="text-2xl font-bold text-gray-900">Office Dashboard</h1>
+        <p className="text-muted-foreground text-sm mt-1">Review, approve, and assign complaints</p>
       </div>
 
-      {/* Staff approval */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Pending Staff Approval</p>
-              <p className="text-2xl font-bold">{pendingStaff.length}</p>
+      {/* Pending Staff Approvals */}
+      {pendingStaff.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/40">
+          <CardContent className="pt-5 pb-4 px-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="size-4 text-amber-600" />
+              <p className="text-sm font-semibold text-amber-800">
+                {pendingStaff.length} staff registration{pendingStaff.length > 1 ? 's' : ''} awaiting approval
+              </p>
             </div>
-            <UserCheck className="size-6 text-blue-600" />
-          </div>
-
-          {pendingStaff.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">No staff requests waiting for approval.</p>
-          ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {pendingStaff.map((s) => (
-                <div key={s.id} className="p-3 border rounded-md flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="font-semibold">{s.fullName}</p>
+                <div key={s.id} className="p-3 bg-white border border-amber-100 rounded-lg flex items-start justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-sm">{s.fullName}</p>
                     <p className="text-xs text-muted-foreground">{s.email}</p>
                     <p className="text-xs text-muted-foreground">
-                      Locations:{' '}
-                      {(s.staffLocations || []).map((loc: string) => locationLabels[loc] || loc).join(', ')}
+                      Locations: {(s.staffLocations || []).map((loc: string) => locationLabels[loc] || loc).join(', ')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleApproveStaff(s.id)}
-                    >
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleApproveStaff(s.id)}>
                       Approve
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-red-200 text-red-700 hover:bg-red-50"
-                      onClick={() => handleOpenReject(s.id)}
-                    >
+                    <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => handleOpenReject(s.id)}>
                       Reject
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Reject Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reject Staff Registration</DialogTitle>
             <DialogDescription>
-              Provide a reason. This will help the staff understand why their registration was rejected.
+              Provide a reason so the staff member understands why their registration was rejected.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Textarea
-              value={rejectReason}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectReason(e.target.value)}
-              placeholder="Reason for rejection..."
-              rows={4}
-            />
-          </div>
+          <Textarea
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Reason for rejection..."
+            rows={4}
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700"
-              onClick={handleConfirmReject}
-              disabled={!rejectReason.trim()}
-            >
+            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Cancel</Button>
+            <Button className="bg-red-600 hover:bg-red-700" onClick={handleConfirmReject} disabled={!rejectReason.trim()}>
               Confirm Reject
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stat Cards — click to filter */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
+          const isActive = activeFilter === stat.key;
           return (
-            <Card key={stat.label}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
+            <Card
+              key={stat.key}
+              onClick={() => setActiveFilter(stat.key)}
+              className={`
+                group relative overflow-hidden border ${stat.border}
+                bg-gradient-to-br ${stat.accent}
+                shadow-sm hover:shadow-lg
+                transition-all duration-300 ease-in-out
+                hover:-translate-y-1 cursor-pointer select-none
+                ${isActive ? stat.activeBg : ''}
+              `}
+            >
+              <CardContent className="pt-5 pb-4 px-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {stat.label}
+                    </p>
+                    <p className="text-4xl font-bold text-gray-900 leading-none">{stat.value}</p>
                   </div>
-                  <div className={`size-12 rounded-full ${stat.color} flex items-center justify-center`}>
-                    <Icon className="size-6" />
+                  <div className={`size-11 rounded-xl ${stat.iconBg} flex items-center justify-center
+                    group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className={`size-5 ${stat.iconColor}`} />
                   </div>
                 </div>
               </CardContent>
+              <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${stat.iconBg} opacity-60`} />
             </Card>
           );
         })}
       </div>
 
-      {/* Complaints Tabs */}
-      <Tabs defaultValue="pending" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pending">Pending ({pendingComplaints.length})</TabsTrigger>
-          <TabsTrigger value="approved">Approved ({approvedComplaints.length})</TabsTrigger>
-          <TabsTrigger value="in-progress">In Progress ({inProgressComplaints.length})</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved ({resolvedComplaints.length})</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected ({rejectedComplaints.length})</TabsTrigger>
-        </TabsList>
+      {/* Complaint List */}
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Showing: <span className="font-medium text-gray-700">{activeLabel}</span>
+          {' '}({filteredComplaints.length})
+        </p>
 
-        <TabsContent value="pending" className="space-y-4">
-          {pendingComplaints.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <Clock className="size-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p>No pending complaints to review</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pendingComplaints.map((complaint) => (
-                <ComplaintManagementCard
-                  key={complaint.id}
-                  complaint={complaint}
-                  canApprove={true}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="approved" className="space-y-4">
-          {approvedComplaints.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <CheckCircle2 className="size-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p>No approved complaints awaiting assignment</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {approvedComplaints.map((complaint) => (
-                <ComplaintManagementCard
-                  key={complaint.id}
-                  complaint={complaint}
-                  canAssign={true}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="in-progress" className="space-y-4">
-          {inProgressComplaints.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <UserCheck className="size-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p>No complaints currently in progress</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {inProgressComplaints.map((complaint) => (
-                <ComplaintManagementCard
-                  key={complaint.id}
-                  complaint={complaint}
-                  canResolve={true}
-                  canSupport={true}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="resolved" className="space-y-4">
-          {resolvedComplaints.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <CheckCircle2 className="size-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p>No resolved complaints</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {resolvedComplaints.map((complaint) => (
-                <ComplaintManagementCard
-                  key={complaint.id}
-                  complaint={complaint}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="rejected" className="space-y-4">
-          {rejectedComplaints.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <XCircle className="size-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p>No rejected complaints</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {rejectedComplaints.map((complaint) => (
-                <ComplaintManagementCard
-                  key={complaint.id}
-                  complaint={complaint}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+        {filteredComplaints.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="size-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <FileText className="size-7 text-muted-foreground opacity-60" />
+              </div>
+              <p className="text-muted-foreground text-sm">No {activeLabel.toLowerCase()} complaints</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredComplaints.map((complaint) => (
+              <ComplaintManagementCard
+                key={complaint.id}
+                complaint={complaint}
+                canApprove={complaint.status === 'pending'}
+                canAssign={complaint.status === 'approved'}
+                canResolve={complaint.status === 'in-progress'}
+                canSupport={complaint.status === 'in-progress'}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

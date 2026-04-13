@@ -72,7 +72,7 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
   const StatusIcon = status.icon;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-in-out border border-gray-100">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">

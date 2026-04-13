@@ -10,23 +10,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app
 import { toast } from 'sonner';
 import { FileText, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 
-const locations: { value: ComplaintLocation; label: string; icon: string }[] = [
-  { value: 'cafeteria', label: 'Cafeteria', icon: '🍽️' },
-  { value: 'dormitory', label: 'Dormitory', icon: '🏠' },
-  { value: 'registrar', label: 'Registrar Office', icon: '📋' },
-  { value: 'hr-office', label: 'HR Office', icon: '👥' },
-  { value: 'faculty', label: 'Faculty Building', icon: '🎓' },
-  { value: 'library', label: 'Library', icon: '📚' },
-  { value: 'unknown', label: 'Unknown', icon: '❓' },
+const locations: { value: ComplaintLocation; label: string }[] = [
+  { value: 'cafeteria', label: 'Cafeteria' },
+  { value: 'dormitory', label: 'Dormitory' },
+  { value: 'registrar', label: 'Registrar Office' },
+  { value: 'hr-office', label: 'HR Office' },
+  { value: 'faculty', label: 'Faculty Building' },
+  { value: 'library', label: 'Library' },
+  { value: 'unknown', label: 'Unknown' },
 ];
 
-const issueTypes: { value: IssueType; label: string; icon: string }[] = [
-  { value: 'service-problem', label: 'Service Problem', icon: '⚙️' },
-  { value: 'staff-behavior', label: 'Staff Behavior', icon: '👤' },
-  { value: 'security-issue', label: 'Security Issue', icon: '🔒' },
-  { value: 'facility-problem', label: 'Facility Problem', icon: '🔧' },
-  { value: 'academic-issue', label: 'Academic Issue', icon: '📖' },
-  { value: 'other', label: 'Other', icon: '📝' },
+const issueTypes: { value: IssueType; label: string }[] = [
+  { value: 'service-problem', label: 'Service Problem' },
+  { value: 'staff-behavior', label: 'Staff Behavior' },
+  { value: 'security-issue', label: 'Security Issue' },
+  { value: 'facility-problem', label: 'Facility Problem' },
+  { value: 'academic-issue', label: 'Academic Issue' },
+  { value: 'other', label: 'Other' },
 ];
 
 interface ComplaintFormProps {
@@ -164,10 +164,7 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
                 <SelectContent>
                   {locations.map((loc) => (
                     <SelectItem key={loc.value} value={loc.value}>
-                      <span className="flex items-center gap-2">
-                        <span>{loc.icon}</span>
-                        {loc.label}
-                      </span>
+                      {loc.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -190,10 +187,7 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
                 <SelectContent>
                   {issueTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
-                      <span className="flex items-center gap-2">
-                        <span>{type.icon}</span>
-                        {type.label}
-                      </span>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

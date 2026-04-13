@@ -4,11 +4,13 @@ import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Card, CardContent } from '@/app/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
+import { Badge } from '@/app/components/ui/badge';
+import { Separator } from '@/app/components/ui/separator';
 import { toast } from 'sonner';
 import { ComplaintLocation, IssueType } from '@/app/context/ComplaintContext';
-import { FileText, Loader2 } from 'lucide-react';
+import { ShieldCheck, Loader2, MapPin, Tag, Paperclip, ArrowLeft, Search } from 'lucide-react';
 
 const API_BASE = 'http://localhost:4000';
 
@@ -74,9 +76,9 @@ export function AnonymousComplaintPage() {
         return;
       }
 
-      toast.success('Complaint submitted');
+      toast.success('Complaint submitted successfully');
       navigate('/thank-you', { state: { trackingCode: data.trackingCode } });
-    } catch (err) {
+    } catch {
       toast.error('Failed to submit anonymous complaint');
     } finally {
       setIsSubmitting(false);
@@ -84,45 +86,53 @@ export function AnonymousComplaintPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="space-y-2">
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="size-5" />
-            Submit Anonymous Complaint
-          </CardTitle>
-          <CardDescription>
-            Your identity will not be stored. You can optionally attach photo/video proof.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Complaint Title *</Label>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-100 flex flex-col items-center justify-start p-4 pt-8">
+
+      {/* Header / Branding */}
+      <div className="flex flex-col items-center gap-3 mb-6">
+        <div className="size-20 rounded-full bg-blue-600 flex items-center justify-center shadow-lg ring-4 ring-white">
+          <img
+            src="/assets/log.png"
+            alt="Campus logo"
+            className="size-14 rounded-full object-cover"
+          />
+        </div>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-slate-800">Campus Service Complaint System</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Anonymous Complaint Submission</p>
+        </div>
+        <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1 text-xs">
+          <ShieldCheck className="size-3.5 text-green-600" />
+          Your identity is fully protected
+        </Badge>
+      </div>
+
+      {/* Form Card */}
+      <Card className="w-full max-w-2xl shadow-md border-0">
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Title */}
+            <div className="space-y-1.5">
+              <Label htmlFor="title">
+                Complaint Title <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Brief summary"
+                placeholder="Brief summary of the issue"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Complaint Description *</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Explain the issue in detail..."
-                rows={6}
-                required
-              />
-            </div>
-
+            {/* Location & Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Location (Optional)</Label>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <MapPin className="size-3.5 text-muted-foreground" />
+                  Location
+                </Label>
                 <Select
                   value={formData.location}
                   onValueChange={(v) => setFormData({ ...formData, location: v as ComplaintLocation })}
@@ -140,8 +150,11 @@ export function AnonymousComplaintPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Category (Optional)</Label>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Tag className="size-3.5 text-muted-foreground" />
+                  Category
+                </Label>
                 <Select
                   value={formData.category}
                   onValueChange={(v) => setFormData({ ...formData, category: v as IssueType })}
@@ -160,8 +173,27 @@ export function AnonymousComplaintPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="attachments">Attachments (Optional)</Label>
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label htmlFor="description">
+                Description <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Describe the issue in detail — the more context, the better."
+                rows={6}
+                required
+              />
+            </div>
+
+            {/* Attachments */}
+            <div className="space-y-1.5">
+              <Label htmlFor="attachments" className="flex items-center gap-1.5">
+                <Paperclip className="size-3.5 text-muted-foreground" />
+                Attachments <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
               <Input
                 id="attachments"
                 type="file"
@@ -169,11 +201,13 @@ export function AnonymousComplaintPage() {
                 accept="image/*,video/*"
                 onChange={(e) => setFiles(e.target.files)}
                 disabled={isSubmitting}
+                className="cursor-pointer"
               />
-              <p className="text-xs text-muted-foreground">Up to 5 files. Max 20MB each.</p>
+              <p className="text-xs text-muted-foreground">Up to 5 files · Max 20MB each · Images & videos accepted</p>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {/* Submit */}
+            <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />
@@ -184,18 +218,33 @@ export function AnonymousComplaintPage() {
               )}
             </Button>
 
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <Link to="/track" className="text-blue-600 dark:text-blue-400 hover:underline">
-                Check complaint status
+            <Separator />
+
+            {/* Footer links */}
+            <div className="flex items-center justify-between text-sm">
+              <Link
+                to="/track"
+                className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <Search className="size-3.5" />
+                Track complaint status
               </Link>
-              <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+              <Link
+                to="/"
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground hover:underline"
+              >
+                <ArrowLeft className="size-3.5" />
                 Back to login
               </Link>
             </div>
+
           </form>
         </CardContent>
       </Card>
+
+      <p className="mt-6 text-xs text-slate-400 text-center max-w-sm">
+        No personal information is collected or stored when submitting anonymously.
+      </p>
     </div>
   );
 }
-
