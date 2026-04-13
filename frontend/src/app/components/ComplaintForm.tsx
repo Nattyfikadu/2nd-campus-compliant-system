@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { toast } from 'sonner';
 import { FileText, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
+import { API_BASE } from '@/lib/api';
 
 const locations: { value: ComplaintLocation; label: string }[] = [
   { value: 'cafeteria', label: 'Cafeteria' },
@@ -86,7 +87,7 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
           formDataUpload.append('files', file);
         });
 
-        const uploadRes = await fetch(`http://localhost:4000/api/uploads/${created.id}`, {
+        const uploadRes = await fetch(`${API_BASE}/api/uploads/${created.id}`, {
           method: 'POST',
           body: formDataUpload,
         });

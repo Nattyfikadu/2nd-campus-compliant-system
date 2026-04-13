@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { API_BASE } from '@/lib/api';
 import { User } from './AuthContext';
 
 export type ComplaintStatus = 'pending' | 'approved' | 'in-progress' | 'resolved' | 'rejected';
@@ -102,7 +103,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
 
   const reloadComplaints = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/complaints');
+      const res = await fetch('${API_BASE}/api/complaints');
       const json = await res.json();
       // API returns { data: [], pagination: {} } — handle both shapes
       const list = Array.isArray(json) ? json : (json.data ?? []);
@@ -134,7 +135,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>
   ): Promise<Complaint | null> => {
     try {
-      const res = await fetch('http://localhost:4000/api/complaints', {
+      const res = await fetch('${API_BASE}/api/complaints', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +175,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     supportStaffAdd?: { id: string; name: string }
   ) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/complaints/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/complaints/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

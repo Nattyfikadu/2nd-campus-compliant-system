@@ -65,7 +65,7 @@ const issueTypeLabels: Record<string, string> = {
   'academic-issue': 'Academic Issue',
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+import { API_BASE } from '@/lib/api';
 
 function resolveUrl(url: string) {
   if (!url) return url;

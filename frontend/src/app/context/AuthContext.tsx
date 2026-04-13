@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { API_BASE } from '@/lib/api';
 
 export type UserRole = 'student' | 'visitor' | 'staff' | 'office' | 'admin';
 
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await fetch('http://localhost:4000/api/auth/login', {
+      const res = await fetch('${API_BASE}/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userData: RegisterData
   ): Promise<{ success: boolean; error?: string; requiresApproval?: boolean }> => {
     try {
-      const res = await fetch('http://localhost:4000/api/auth/register', {
+      const res = await fetch('${API_BASE}/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
@@ -138,8 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getAllStaff = async (location?: string): Promise<User[]> => {
     try {
       const url = location
-        ? `http://localhost:4000/api/auth/staff?location=${encodeURIComponent(location)}`
-        : 'http://localhost:4000/api/auth/staff';
+        ? `${API_BASE}/api/auth/staff?location=${encodeURIComponent(location)}`
+        : '${API_BASE}/api/auth/staff';
       const res = await fetch(url);
       if (!res.ok) {
         return [];
@@ -153,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getPendingStaff = async (): Promise<User[]> => {
     try {
-      const res = await fetch('http://localhost:4000/api/auth/staff/pending');
+      const res = await fetch('${API_BASE}/api/auth/staff/pending');
       if (!res.ok) return [];
       return await res.json();
     } catch (err) {
@@ -164,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const approveStaff = async (staffId: string): Promise<boolean> => {
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/staff/${staffId}/approve`, {
+      const res = await fetch(`${API_BASE}/api/auth/staff/${staffId}/approve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actorRole: user?.role }),
@@ -179,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const rejectStaff = async (staffId: string, rejectionReason: string): Promise<boolean> => {
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/staff/${staffId}/reject`, {
+      const res = await fetch(`${API_BASE}/api/auth/staff/${staffId}/reject`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { ComplaintLocation, IssueType } from '@/app/context/ComplaintContext';
 import { ShieldCheck, Loader2, MapPin, Tag, Paperclip, ArrowLeft, Search } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+import { API_BASE } from '@/lib/api';
 
 const locations: { value: ComplaintLocation; label: string }[] = [
   { value: 'unknown', label: 'Unknown' },
