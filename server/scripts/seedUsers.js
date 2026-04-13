@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 const User = require('../models/User');
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus_complaints';
 
@@ -52,12 +51,8 @@ async function seedUsers() {
         continue;
       }
 
-      // Hash password manually
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-      const user = new User({
-        ...userData,
-        password: hashedPassword,
-      });
+      // Let the pre-save hook handle hashing
+      const user = new User(userData);
       await user.save();
       console.log(`✅ Created user: ${userData.email} (${userData.role})`);
     }

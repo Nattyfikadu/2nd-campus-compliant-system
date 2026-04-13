@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const UserSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
+    email: { type: String, required: true, unique: true, lowercase: true },  // unique handled inline
     password: { type: String, required: true },
     role: {
       type: String,
@@ -12,12 +12,12 @@ const UserSchema = new mongoose.Schema(
       required: true,
     },
     // Student-specific fields
-    studentId: { type: String, sparse: true }, // Only for students, unique but sparse
+    studentId: { type: String, unique: true, sparse: true },
     phone: { type: String },
     department: { type: String },
-    faculty: { type: String }, // Alternative to department
+    faculty: { type: String },
     // Staff-specific fields
-    staffId: { type: String, sparse: true }, // Only for staff
+    staffId: { type: String, unique: true, sparse: true },
     position: { type: String }, // Job title/position for staff
     staffLocations: {
       type: [String],
@@ -35,10 +35,7 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-// Index for studentId uniqueness (only for students)
-UserSchema.index({ studentId: 1 }, { unique: true, sparse: true });
-UserSchema.index({ staffId: 1 }, { unique: true, sparse: true });
-UserSchema.index({ email: 1 });
+// Only add indexes not already declared inline above
 UserSchema.index({ role: 1, staffApproved: 1, staffRejected: 1 });
 
 // Hash password before saving

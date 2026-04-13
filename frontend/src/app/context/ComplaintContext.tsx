@@ -103,8 +103,10 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
   const reloadComplaints = async () => {
     try {
       const res = await fetch('http://localhost:4000/api/complaints');
-      const data = await res.json();
-      setComplaints(data.map(hydrateComplaintDates));
+      const json = await res.json();
+      // API returns { data: [], pagination: {} } — handle both shapes
+      const list = Array.isArray(json) ? json : (json.data ?? []);
+      setComplaints(list.map(hydrateComplaintDates));
     } catch (err) {
       console.error('Failed to load complaints from API', err);
     }

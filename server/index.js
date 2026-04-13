@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const complaintsRouter = require('./routes/complaints');
 const authRouter = require('./routes/auth');
 const uploadsRouter = require('./routes/uploads');
@@ -12,16 +12,19 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus_complaints';
 
-// CORS — restrict to known origins in production
+// CORS — open for local dev, restrict to known origins in production
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:4173'];
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
+    // Allow requests with no origin (Postman, curl, mobile apps)
+    if (!origin) return callback(null, true);
+    // In dev (no ALLOWED_ORIGINS set), allow everything
+    if (allowedOrigins.length === 0) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
 }));
@@ -62,10 +65,12 @@ app.get('/api/health', (req, res) => {
 
 async function start() {
   try {
+    console.log('🔌 Connecting to:', MONGO_URI.substring(0, 40) + '...');
+    console.log('☁️  Cloudinary cloud:', process.env.CLOUDINARY_CLOUD_NAME || 'NOT SET');
     await mongoose.connect(MONGO_URI, {
       dbName: 'campus_complaints',
     });
-    console.log('✅ Connected to MongoDB');
+    console.log('✅ Connected to MongoDB Atlas');
 
     app.listen(PORT, () => {
       console.log(`🚀 API server running on http://localhost:${PORT}`);

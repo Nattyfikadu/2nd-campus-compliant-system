@@ -64,7 +64,13 @@ const issueTypeLabels: Record<string, string> = {
   'academic-issue': 'Academic Issue',
 };
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
+// Cloudinary URLs are absolute (https://...), local uploads are relative (/uploads/...)
+function resolveUrl(url: string) {
+  if (!url) return url;
+  return url.startsWith('http') ? url : `${API_BASE}${url}`;
+}
 
 export function ComplaintCard({ complaint }: ComplaintCardProps) {
   const statusKey = complaint.status as keyof typeof statusConfig;
@@ -105,13 +111,13 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
                 att.type === 'image' ? (
                   <a
                     key={att.url}
-                    href={`${API_BASE}${att.url}`}
+                    href={resolveUrl(att.url)}
                     target="_blank"
                     rel="noreferrer"
                     className="block"
                   >
                     <ImageWithFallback
-                      src={`${API_BASE}${att.url}`}
+                      src={resolveUrl(att.url)}
                       alt={att.originalName}
                       className="h-16 w-16 object-cover rounded border"
                     />
@@ -119,7 +125,7 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
                 ) : (
                   <a
                     key={att.url}
-                    href={`${API_BASE}${att.url}`}
+                    href={resolveUrl(att.url)}
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs text-blue-600 underline"
@@ -176,13 +182,13 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
                       att.type === 'image' ? (
                         <a
                           key={att.url}
-                          href={`${API_BASE}${att.url}`}
+                          href={resolveUrl(att.url)}
                           target="_blank"
                           rel="noreferrer"
                           className="block"
                         >
                           <ImageWithFallback
-                            src={`${API_BASE}${att.url}`}
+                            src={resolveUrl(att.url)}
                             alt={att.originalName}
                             className="h-16 w-16 object-cover rounded border"
                           />
@@ -190,7 +196,7 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
                       ) : (
                         <a
                           key={att.url}
-                          href={`${API_BASE}${att.url}`}
+                          href={resolveUrl(att.url)}
                           target="_blank"
                           rel="noreferrer"
                           className="text-xs text-blue-700 underline"
