@@ -367,8 +367,8 @@ router.post('/forgot-password', async (req, res) => {
 
     res.json({ message: 'If that email exists, a reset link was sent' });
   } catch (err) {
-    console.error('Forgot password error:', err);
-    res.status(500).json({ error: 'Failed to process request' });
+    console.error('Forgot password error:', err.message || err);
+    res.status(500).json({ error: 'Failed to process request', detail: err.message });
   }
 });
 
