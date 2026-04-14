@@ -1,20 +1,11 @@
 const express = require('express');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const User = require('../models/User');
 
 const router = express.Router();
 
-// Email transporter — configure via env vars
-function getTransporter() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Simple Student ID validation based on Ethiopian calendar rules
 // Example ID: 1205001 -> 12 (year), 05 (month), 001 (student number)
@@ -347,10 +338,9 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      const transporter = getTransporter();
-      await transporter.sendMail({
-        from: `"Campus Complaint System" <${process.env.EMAIL_USER}>`,
+    if (process.env.RESEND_API_KEY) {
+      await resend.emails.send({
+        from: 'Campus Complaint System <onboarding@resend.dev>',
         to: user.email,
         subject: 'Password Reset Request',
         html: `
@@ -361,8 +351,7 @@ router.post('/forgot-password', async (req, res) => {
         `,
       });
     } else {
-      // Dev mode — log the link
-      console.log('🔑 Password reset link:', resetUrl);
+      console.log('🔑 Password reset link (no email configured):', resetUrl);
     }
 
     res.json({ message: 'If that email exists, a reset link was sent' });

@@ -49,6 +49,7 @@ const authLimiter = rateLimit({
   message: { error: 'Too many login attempts, please try again later.' },
 });
 
+app.set('trust proxy', 1); // Trust Render/Vercel proxy headers
 app.use(globalLimiter);
 app.use(express.json({ limit: '1mb' }));
 
