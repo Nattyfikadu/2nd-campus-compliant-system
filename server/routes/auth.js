@@ -339,7 +339,7 @@ router.post('/forgot-password', async (req, res) => {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
     if (process.env.RESEND_API_KEY) {
-      await resend.emails.send({
+      const { error: sendError } = await resend.emails.send({
         from: 'Campus Complaint System <onboarding@resend.dev>',
         to: user.email,
         subject: 'Password Reset Request',
@@ -350,6 +350,12 @@ router.post('/forgot-password', async (req, res) => {
           <p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>
         `,
       });
+      if (sendError) {
+        console.error('Resend error:', sendError);
+        console.log('🔑 Fallback reset link:', resetUrl);
+      } else {
+        console.log('✅ Reset email sent to:', user.email);
+      }
     } else {
       console.log('🔑 Password reset link (no email configured):', resetUrl);
     }
