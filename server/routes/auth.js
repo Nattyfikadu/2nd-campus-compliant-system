@@ -10,6 +10,9 @@ function getTransporter() {
     host: 'smtp-relay.brevo.com',
     port: 587,
     secure: false,
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
     auth: {
       user: process.env.BREVO_USER,
       pass: process.env.BREVO_SMTP_KEY,
@@ -349,24 +352,24 @@ router.post('/forgot-password', async (req, res) => {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
     if (process.env.BREVO_USER && process.env.BREVO_SMTP_KEY) {
-      const transporter = getTransporter();
-      const { error: sendError } = await transporter.sendMail({
-        from: `"Campus Complaint System" <${process.env.BREVO_USER}>`,
-        to: user.email,
-        subject: 'Password Reset Request',
-        html: `
-          <p>Hi ${user.fullName},</p>
-          <p>You requested a password reset. Click the link below to set a new password:</p>
-          <p><a href="${resetUrl}" style="color:#2563eb">Reset my password</a></p>
-          <p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>
-        `,
-      }).then(() => ({ error: null })).catch(e => ({ error: e }));
-
-      if (sendError) {
-        console.error('Email error:', sendError.message);
+      try {
+        const transporter = getTransporter();
+        await transporter.sendMail({
+          from: `"Campus Complaint System" <${process.env.BREVO_USER}>`,
+          to: user.email,
+          subject: 'Password Reset Request',
+          html: `
+            <p>Hi ${user.fullName},</p>
+            <p>You requested a password reset. Click the link below:</p>
+            <p><a href="${resetUrl}" style="color:#2563eb">Reset my password</a></p>
+            <p>This link expires in 1 hour.</p>
+          `,
+        });
+        console.log('✅ Reset email sent to:', user.email);
+      } catch (emailErr) {
+        console.error('Email send error:', emailErr.message);
         return res.json({ message: 'Email delivery failed. Use the link below.', resetUrl });
       }
-      console.log('✅ Reset email sent to:', user.email);
     } else {
       console.log('🔑 Password reset link (no email configured):', resetUrl);
       return res.json({ message: 'Email not configured. Use the link below.', resetUrl });
