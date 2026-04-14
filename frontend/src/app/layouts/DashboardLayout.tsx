@@ -80,27 +80,30 @@ export function DashboardLayout() {
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-full bg-blue-600 flex items-center justify-center">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="size-10 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                 <img
                   src="/assets/log.png"
                   alt="Campus logo"
                   className="size-8 rounded-full object-cover"
                 />
               </div>
-              <div>
-                <h1 className="font-semibold text-lg text-gray-900">Campus Service Complaint System</h1>
+              <div className="hidden sm:block min-w-0">
+                <h1 className="font-semibold text-lg text-gray-900 truncate">Campus Service Complaint System</h1>
                 <p className="text-xs text-gray-500">Issue Management & Tracking</p>
+              </div>
+              <div className="sm:hidden">
+                <h1 className="font-semibold text-sm text-gray-900">CSCS</h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
                 <p className="text-xs text-gray-500">{user.email}</p>
               </div>
 
-              {/* Quick logout icon button */}
+              {/* Desktop logout button */}
               <Button
                 variant="outline"
                 size="icon"
@@ -132,7 +135,11 @@ export function DashboardLayout() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={() => navigate('/change-password')}>
+                    Change Password
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
                     <LogOut className="mr-2 size-4" />
                     Logout
                   </DropdownMenuItem>

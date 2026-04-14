@@ -27,6 +27,9 @@ const UserSchema = new mongoose.Schema(
     staffApproved: { type: Boolean, default: false }, // Only applies to role='staff'
     staffRejected: { type: Boolean, default: false }, // Only applies to role='staff'
     staffRejectionReason: { type: String }, // Only applies to role='staff'
+    // Password reset
+    resetToken: { type: String },
+    resetTokenExpiry: { type: Date },
     // Visitor-specific (minimal)
     // They can optionally provide email/phone for notifications
   },
