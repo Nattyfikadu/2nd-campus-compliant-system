@@ -11,6 +11,7 @@ import { API_BASE } from '@/lib/api';
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [resetUrl, setResetUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +30,7 @@ export function ForgotPasswordPage() {
         setError(data.error || 'Failed to send reset email');
         return;
       }
+      if (data.resetUrl) setResetUrl(data.resetUrl);
       setSubmitted(true);
     } catch {
       setError('Network error. Please try again.');
@@ -59,10 +61,22 @@ export function ForgotPasswordPage() {
               <div className="size-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
                 <Mail className="size-6 text-green-600" />
               </div>
-              <p className="font-medium text-gray-900">Check your email</p>
-              <p className="text-sm text-muted-foreground">
-                If <span className="font-medium">{email}</span> is registered, you'll receive a reset link shortly.
-              </p>
+              <p className="font-medium text-gray-900">Request received</p>
+              {resetUrl ? (
+                <div className="space-y-2 text-left p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 font-medium">Email delivery unavailable. Click below to reset your password:</p>
+                  <a
+                    href={resetUrl}
+                    className="text-sm text-blue-600 hover:underline break-all block"
+                  >
+                    Reset my password
+                  </a>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  If <span className="font-medium">{email}</span> is registered, you'll receive a reset link shortly.
+                </p>
+              )}
               <Link to="/" className="text-sm text-blue-600 hover:underline block mt-2">
                 Back to login
               </Link>

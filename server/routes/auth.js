@@ -353,11 +353,14 @@ router.post('/forgot-password', async (req, res) => {
       if (sendError) {
         console.error('Resend error:', sendError);
         console.log('🔑 Fallback reset link:', resetUrl);
+        // Return the link directly so user can still reset
+        return res.json({ message: 'Email delivery unavailable. Use the link below to reset your password.', resetUrl });
       } else {
         console.log('✅ Reset email sent to:', user.email);
       }
     } else {
       console.log('🔑 Password reset link (no email configured):', resetUrl);
+      return res.json({ message: 'Email not configured. Use the link below to reset your password.', resetUrl });
     }
 
     res.json({ message: 'If that email exists, a reset link was sent' });
