@@ -31,6 +31,7 @@ export function OfficeDashboard() {
   const { getComplaintsByStatus } = useComplaints();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('pending');
   const [pendingStaff, setPendingStaff] = useState<any[]>([]);
+  const [showStaffPanel, setShowStaffPanel] = useState(false);
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -156,40 +157,97 @@ export function OfficeDashboard() {
         <p className="text-muted-foreground text-sm mt-1">Review, approve, and assign complaints</p>
       </div>
 
-      {/* Pending Staff Approvals */}
-      {pendingStaff.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/40">
-          <CardContent className="pt-5 pb-4 px-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <UserCheck className="size-4 text-amber-600" />
-              <p className="text-sm font-semibold text-amber-800">
-                {pendingStaff.length} staff registration{pendingStaff.length > 1 ? 's' : ''} awaiting approval
+      {/* Pending Staff Approvals — collapsible */}
+      <div>
+        {/* Toggle button — always visible */}
+        <button
+          onClick={() => setShowStaffPanel(v => !v)}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors
+            ${pendingStaff.length > 0
+              ? 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+            }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <UserCheck className={`size-4 ${pendingStaff.length > 0 ? 'text-amber-600' : 'text-gray-400'}`} />
+            <span className={`text-sm font-semibold ${pendingStaff.length > 0 ? 'text-amber-800' : 'text-gray-600'}`}>
+              Pending Staff Approvals
+            </span>
+            {pendingStaff.length > 0 && (
+              <span className="inline-flex items-center justify-center size-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                {pendingStaff.length}
+              </span>
+            )}
+          </div>
+          <span className="text-gray-400 text-xs font-medium">
+            {showStaffPanel ? '▲ Collapse' : '▼ Show'}
+          </span>
+        </button>
+
+        {/* Collapsible content */}
+        {showStaffPanel && (
+          <div className="mt-3 space-y-3">
+            {pendingStaff.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6 italic">
+                No pending staff registrations.
               </p>
-            </div>
-            <div className="space-y-2">
-              {pendingStaff.map((s) => (
-                <div key={s.id} className="p-3 bg-white border border-amber-100 rounded-lg flex items-start justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-sm">{s.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{s.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Locations: {(s.staffLocations || []).map((loc: string) => locationLabels[loc] || loc).join(', ')}
-                    </p>
+            ) : (
+              pendingStaff.map((s) => (
+                <div key={s.id} className="p-4 bg-white border border-amber-100 rounded-xl shadow-sm space-y-3">
+                  {/* Header row */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                        <span className="text-white font-bold text-base">
+                          {s.fullName?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm text-gray-900">{s.fullName}</p>
+                        <p className="text-xs text-muted-foreground">Staff Registration</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-full shrink-0">
+                      Pending
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleApproveStaff(s.id)}>
-                      Approve
+
+                  {/* Detail grid */}
+                  <div className="bg-gray-50 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-4 text-sm">
+                    {[
+                      { icon: '✉️', label: 'Email', value: s.email },
+                      { icon: '🪪', label: 'Staff ID', value: s.staffId },
+                      { icon: '🏢', label: 'Department', value: s.department },
+                      { icon: '🎓', label: 'Faculty', value: s.faculty },
+                      { icon: '💼', label: 'Position', value: s.position },
+                      { icon: '📍', label: 'Locations', value: (s.staffLocations || []).map((loc: string) => locationLabels[loc] || loc).join(', ') || undefined },
+                      { icon: '📞', label: 'Phone', value: s.phone },
+                    ]
+                      .filter((row) => row.value)
+                      .map((row) => (
+                        <div key={row.label} className="flex items-start gap-2">
+                          <span className="text-base leading-5">{row.icon}</span>
+                          <span className="text-muted-foreground font-medium w-20 shrink-0">{row.label}:</span>
+                          <span className="text-gray-900 font-medium break-all">{row.value}</span>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex-1" onClick={() => handleApproveStaff(s.id)}>
+                      ✓ Approve
                     </Button>
-                    <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => handleOpenReject(s.id)}>
-                      Reject
+                    <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50 flex-1" onClick={() => handleOpenReject(s.id)}>
+                      ✕ Reject
                     </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Reject Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
