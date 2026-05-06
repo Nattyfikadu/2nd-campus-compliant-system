@@ -51,7 +51,7 @@ const authLimiter = rateLimit({
 
 app.set('trust proxy', 1); // Trust Render/Vercel proxy headers
 app.use(globalLimiter);
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
 
 // Static files for uploaded attachments
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

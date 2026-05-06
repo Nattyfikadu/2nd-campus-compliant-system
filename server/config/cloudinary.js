@@ -13,11 +13,10 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => ({
     folder: 'campus-complaints',
-    resource_type: file.mimetype.startsWith('video') ? 'video' : 'image',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi'],
-    transformation: file.mimetype.startsWith('video')
-      ? undefined
-      : [{ quality: 'auto', fetch_format: 'auto' }], // auto-optimize images
+    resource_type: 'auto', // handles images, videos, and raw files automatically
+    transformation: file.mimetype.startsWith('image')
+      ? [{ quality: 'auto', fetch_format: 'auto' }]
+      : undefined,
   }),
 });
 
