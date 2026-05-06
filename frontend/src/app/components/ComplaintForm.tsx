@@ -217,7 +217,7 @@ export function ComplaintForm({ onSuccess }: ComplaintFormProps) {
               id="attachments"
               type="file"
               multiple
-              accept="image/*,video/*"
+              accept="image/*,video/*,audio/*"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFiles(e.target.files)
               }

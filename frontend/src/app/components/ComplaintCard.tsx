@@ -109,28 +109,17 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
             <div className="flex flex-wrap gap-2">
               {complaint.attachments.map((att) =>
                 att.type === 'image' ? (
-                  <a
-                    key={att.url}
-                    href={resolveUrl(att.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block"
-                  >
-                    <ImageWithFallback
-                      src={resolveUrl(att.url)}
-                      alt={att.originalName}
-                      className="h-16 w-16 object-cover rounded border"
-                    />
+                  <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="block">
+                    <ImageWithFallback src={resolveUrl(att.url)} alt={att.originalName} className="h-16 w-16 object-cover rounded border" />
                   </a>
+                ) : att.type === 'audio' ? (
+                  <div key={att.url} className="w-full">
+                    <p className="text-xs text-muted-foreground mb-1">{att.originalName}</p>
+                    <audio controls src={resolveUrl(att.url)} className="w-full h-8" />
+                  </div>
                 ) : (
-                  <a
-                    key={att.url}
-                    href={resolveUrl(att.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 underline"
-                  >
-                    {att.originalName || 'Video attachment'}
+                  <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline">
+                    {att.originalName || 'Attachment'}
                   </a>
                 )
               )}
@@ -180,27 +169,16 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
                   <div className="flex flex-wrap gap-2">
                     {complaint.resolutionAttachments.map((att) =>
                       att.type === 'image' ? (
-                        <a
-                          key={att.url}
-                          href={resolveUrl(att.url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block"
-                        >
-                          <ImageWithFallback
-                            src={resolveUrl(att.url)}
-                            alt={att.originalName}
-                            className="h-16 w-16 object-cover rounded border"
-                          />
+                        <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="block">
+                          <ImageWithFallback src={resolveUrl(att.url)} alt={att.originalName} className="h-16 w-16 object-cover rounded border" />
                         </a>
+                      ) : att.type === 'audio' ? (
+                        <div key={att.url} className="w-full">
+                          <p className="text-xs text-green-700 mb-1">{att.originalName}</p>
+                          <audio controls src={resolveUrl(att.url)} className="w-full h-8" />
+                        </div>
                       ) : (
-                        <a
-                          key={att.url}
-                          href={resolveUrl(att.url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-blue-700 underline"
-                        >
+                        <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline">
                           {att.originalName || 'Resolution file'}
                         </a>
                       )

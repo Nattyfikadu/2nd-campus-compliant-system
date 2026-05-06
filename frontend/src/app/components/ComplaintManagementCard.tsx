@@ -296,28 +296,17 @@ export function ComplaintManagementCard({
             <div className="flex flex-wrap gap-2">
               {complaint.attachments.map((att) =>
                 att.type === 'image' ? (
-                  <a
-                    key={att.url}
-                    href={resolveUrl(att.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block"
-                  >
-                    <ImageWithFallback
-                      src={resolveUrl(att.url)}
-                      alt={att.originalName}
-                      className="h-16 w-16 object-cover rounded border"
-                    />
+                  <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="block">
+                    <ImageWithFallback src={resolveUrl(att.url)} alt={att.originalName} className="h-16 w-16 object-cover rounded border" />
                   </a>
+                ) : att.type === 'audio' ? (
+                  <div key={att.url} className="w-full">
+                    <p className="text-xs text-muted-foreground mb-1">{att.originalName}</p>
+                    <audio controls src={resolveUrl(att.url)} className="w-full h-8" />
+                  </div>
                 ) : (
-                  <a
-                    key={att.url}
-                    href={resolveUrl(att.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 underline"
-                  >
-                    {att.originalName || 'Video attachment'}
+                  <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline">
+                    {att.originalName || 'Attachment'}
                   </a>
                 )
               )}
@@ -364,27 +353,16 @@ export function ComplaintManagementCard({
             <div className="flex flex-wrap gap-2">
               {complaint.resolutionAttachments.map((att) =>
                 att.type === 'image' ? (
-                  <a
-                    key={att.url}
-                    href={resolveUrl(att.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block"
-                  >
-                    <ImageWithFallback
-                      src={resolveUrl(att.url)}
-                      alt={att.originalName}
-                      className="h-16 w-16 object-cover rounded border"
-                    />
+                  <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="block">
+                    <ImageWithFallback src={resolveUrl(att.url)} alt={att.originalName} className="h-16 w-16 object-cover rounded border" />
                   </a>
+                ) : att.type === 'audio' ? (
+                  <div key={att.url} className="w-full">
+                    <p className="text-xs text-muted-foreground mb-1">{att.originalName}</p>
+                    <audio controls src={resolveUrl(att.url)} className="w-full h-8" />
+                  </div>
                 ) : (
-                  <a
-                    key={att.url}
-                    href={resolveUrl(att.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 underline"
-                  >
+                  <a key={att.url} href={resolveUrl(att.url)} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline">
                     {att.originalName}
                   </a>
                 )
@@ -579,7 +557,7 @@ export function ComplaintManagementCard({
                         id="resolution-attachments"
                         type="file"
                         multiple
-                        accept="image/*,.pdf,.doc,.docx,.txt"
+                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const files = Array.from(e.target.files || []);
                           setResolutionAttachments(files);

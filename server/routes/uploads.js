@@ -21,7 +21,10 @@ function handleUpload(req, res, next) {
 function mapFiles(files) {
   return (files || []).map((file) => ({
     url: file.path || file.secure_url || '',
-    type: file.mimetype.startsWith('image') ? 'image' : 'video',
+    type: file.mimetype.startsWith('image') ? 'image'
+        : file.mimetype.startsWith('video') ? 'video'
+        : file.mimetype.startsWith('audio') ? 'audio'
+        : 'file',
     originalName: file.originalname,
   }));
 }

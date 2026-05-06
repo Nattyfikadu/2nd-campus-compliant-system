@@ -23,7 +23,7 @@ export type IssueType =
 
 export interface Attachment {
   url: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'audio' | 'file';
   originalName: string;
 }
 

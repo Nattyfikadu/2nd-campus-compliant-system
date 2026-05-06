@@ -110,8 +110,10 @@ router.post('/anonymous', upload.array('files', 5), async (req, res) => {
 
     // Files are already uploaded to Cloudinary by multer-storage-cloudinary
     const attachments = (req.files || []).map((file) => ({
-      url: file.path || file.secure_url,  // handle both versions
-      type: file.mimetype.startsWith('video') ? 'video' : 'image',
+      url: file.path || file.secure_url,
+      type: file.mimetype.startsWith('video') ? 'video'
+          : file.mimetype.startsWith('audio') ? 'audio'
+          : 'image',
       originalName: file.originalname,
     }));
 

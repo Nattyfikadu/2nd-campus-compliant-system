@@ -198,7 +198,7 @@ export function AnonymousComplaintPage() {
                 id="attachments"
                 type="file"
                 multiple
-                accept="image/*,video/*"
+                accept="image/*,video/*,audio/*"
                 onChange={(e) => setFiles(e.target.files)}
                 disabled={isSubmitting}
                 className="cursor-pointer"
