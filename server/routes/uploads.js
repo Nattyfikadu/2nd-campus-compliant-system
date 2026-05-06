@@ -4,14 +4,32 @@ const { upload } = require('../config/cloudinary');
 
 const router = express.Router();
 
-// Upload resolution attachments (returns URLs only, not saved to complaint yet)
-router.post('/resolution', upload.array('files', 5), async (req, res) => {
+function handleUpload(req, res, next) {
+  upload.array('files', 5)(req, res, (err) => {
+    if (err) {
+      console.error('Upload error:', err.message);
+      return res.status(500).json({ error: 'File upload failed', detail: err.message });
+    }
+    const files = req.files || [];
+    if (files.length > 0) {
+      console.log('Uploaded files:', files.length, '| path:', files[0].path, '| secure_url:', files[0].secure_url);
+    }
+    next();
+  });
+}
+
+function mapFiles(files) {
+  return (files || []).map((file) => ({
+    url: file.path || file.secure_url || '',
+    type: file.mimetype.startsWith('image') ? 'image' : 'video',
+    originalName: file.originalname,
+  }));
+}
+
+// Upload resolution attachments (returns URLs only)
+router.post('/resolution', handleUpload, async (req, res) => {
   try {
-    const attachments = (req.files || []).map((file) => ({
-      url: file.path || file.secure_url,  // handle both versions
-      type: file.mimetype.startsWith('image') ? 'image' : 'video',
-      originalName: file.originalname,
-    }));
+    const attachments = mapFiles(req.files);
     res.json({ attachments });
   } catch (err) {
     console.error('Error uploading resolution attachments:', err);
@@ -20,22 +38,12 @@ router.post('/resolution', upload.array('files', 5), async (req, res) => {
 });
 
 // Upload attachments and attach to an existing complaint
-router.post('/:complaintId', upload.array('files', 5), async (req, res) => {
+router.post('/:complaintId', handleUpload, async (req, res) => {
   try {
-    const files = req.files || [];
-    if (files.length > 0) {
-      console.log('Upload file keys:', Object.keys(files[0]));
-      console.log('Upload file sample:', JSON.stringify(files[0], null, 2));
-    }
     const complaint = await Complaint.findById(req.params.complaintId);
     if (!complaint) return res.status(404).json({ error: 'Complaint not found' });
 
-    const newAttachments = (req.files || []).map((file) => ({
-      url: file.path || file.secure_url,  // handle both versions
-      type: file.mimetype.startsWith('image') ? 'image' : 'video',
-      originalName: file.originalname,
-    }));
-
+    const newAttachments = mapFiles(req.files);
     complaint.attachments = [...complaint.attachments, ...newAttachments];
     await complaint.save();
 
