@@ -22,7 +22,11 @@ router.post('/resolution', upload.array('files', 5), async (req, res) => {
 // Upload attachments and attach to an existing complaint
 router.post('/:complaintId', upload.array('files', 5), async (req, res) => {
   try {
-    console.log('Upload files received:', (req.files || []).map(f => ({ path: f.path, secure_url: f.secure_url, mimetype: f.mimetype })));
+    const files = req.files || [];
+    if (files.length > 0) {
+      console.log('Upload file keys:', Object.keys(files[0]));
+      console.log('Upload file sample:', JSON.stringify(files[0], null, 2));
+    }
     const complaint = await Complaint.findById(req.params.complaintId);
     if (!complaint) return res.status(404).json({ error: 'Complaint not found' });
 

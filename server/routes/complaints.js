@@ -189,7 +189,7 @@ router.patch('/:id/status', async (req, res) => {
     if (assignedTo) update.assignedTo = assignedTo;
     if (status === 'resolved') update.resolvedAt = new Date();
 
-    let updated = await Complaint.findByIdAndUpdate(req.params.id, update, { new: true });
+    let updated = await Complaint.findByIdAndUpdate(req.params.id, update, { new: true, returnDocument: 'after' });
 
     if (!updated) return res.status(404).json({ error: 'Complaint not found' });
 
