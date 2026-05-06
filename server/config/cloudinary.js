@@ -11,13 +11,17 @@ cloudinary.config({
 // Storage adapter — uploads directly to Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => ({
-    folder: 'campus-complaints',
-    resource_type: 'auto', // handles images, videos, and raw files automatically
-    transformation: file.mimetype.startsWith('image')
-      ? [{ quality: 'auto', fetch_format: 'auto' }]
-      : undefined,
-  }),
+  params: async (req, file) => {
+    const isVideo = file.mimetype.startsWith('video');
+    const isImage = file.mimetype.startsWith('image');
+    return {
+      folder: 'campus-complaints',
+      resource_type: isVideo ? 'video' : isImage ? 'image' : 'raw',
+      transformation: isImage
+        ? [{ quality: 'auto', fetch_format: 'auto' }]
+        : undefined,
+    };
+  },
 });
 
 const upload = multer({
