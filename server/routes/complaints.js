@@ -212,4 +212,20 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
+// Delete a complaint (only pending complaints can be deleted by submitter)
+router.delete('/:id', async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) return res.status(404).json({ error: 'Complaint not found' });
+    if (complaint.status !== 'pending') {
+      return res.status(403).json({ error: 'Only pending complaints can be withdrawn' });
+    }
+    await complaint.deleteOne();
+    res.json({ message: 'Complaint withdrawn successfully' });
+  } catch (err) {
+    console.error('Error deleting complaint:', err);
+    res.status(500).json({ error: 'Failed to withdraw complaint' });
+  }
+});
+
 module.exports = router;

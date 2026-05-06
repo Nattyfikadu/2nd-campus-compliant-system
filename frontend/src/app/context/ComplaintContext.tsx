@@ -86,6 +86,7 @@ interface ComplaintContextType {
   getComplaintsByStatus: (status: ComplaintStatus) => Complaint[];
   getComplaintsByAssignee: (assigneeId: string) => Complaint[];
   reloadComplaints: () => Promise<void>;
+  deleteComplaint: (id: string) => Promise<boolean>;
 }
 
 const ComplaintContext = createContext<ComplaintContextType | undefined>(undefined);
@@ -219,6 +220,19 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     return complaints.filter(c => c.assignedTo?.id === assigneeId);
   };
 
+  const deleteComplaint = async (id: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/complaints/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) return false;
+      setComplaints(prev => prev.filter(c => c.id !== id));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <ComplaintContext.Provider value={{
       complaints,
@@ -227,7 +241,8 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
       getComplaintsByUser,
       getComplaintsByStatus,
       getComplaintsByAssignee,
-      reloadComplaints
+      reloadComplaints,
+      deleteComplaint,
     }}>
       {children}
     </ComplaintContext.Provider>
