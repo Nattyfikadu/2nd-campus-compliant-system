@@ -70,10 +70,19 @@ async function start() {
   try {
     console.log('🔌 Connecting to:', MONGO_URI.substring(0, 40) + '...');
     console.log('☁️  Cloudinary cloud:', process.env.CLOUDINARY_CLOUD_NAME || 'NOT SET');
-    await mongoose.connect(MONGO_URI, {
-      dbName: 'campus_complaints',
-    });
+    console.log('🔑 Cloudinary key:', process.env.CLOUDINARY_API_KEY ? process.env.CLOUDINARY_API_KEY.substring(0, 6) + '...' : 'NOT SET');
+
+    await mongoose.connect(MONGO_URI, { dbName: 'campus_complaints' });
     console.log('✅ Connected to MongoDB Atlas');
+
+    // Verify Cloudinary credentials on startup
+    try {
+      const cloudinary = require('cloudinary').v2;
+      await cloudinary.api.ping();
+      console.log('✅ Cloudinary credentials valid');
+    } catch (cErr) {
+      console.error('❌ Cloudinary credentials invalid:', cErr.message);
+    }
 
     app.listen(PORT, () => {
       console.log(`🚀 API server running on http://localhost:${PORT}`);

@@ -7,7 +7,7 @@ const router = express.Router();
 function handleUpload(req, res, next) {
   upload.array('files', 5)(req, res, (err) => {
     if (err) {
-      console.error('Upload error:', err.message);
+      console.error('Upload error:', err.message, '| http_code:', err.http_code, '| full:', JSON.stringify(err));
       return res.status(500).json({ error: 'File upload failed', detail: err.message });
     }
     const files = req.files || [];
