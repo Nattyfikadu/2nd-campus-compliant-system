@@ -8,22 +8,23 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage adapter — uploads directly to Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     const isVideo = file.mimetype.startsWith('video');
+    console.log('Uploading to Cloudinary:', file.originalname, '| type:', file.mimetype, '| resource_type:', isVideo ? 'video' : 'image');
     return {
       folder: 'campus-complaints',
-      resource_type: isVideo ? 'video' : 'image',
-      // No allowed_formats restriction — accept anything Cloudinary supports
+      resource_type: 'auto', // let Cloudinary detect automatically
+      use_filename: false,
+      unique_filename: true,
     };
   },
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  limits: { fileSize: 20 * 1024 * 1024 },
 });
 
 module.exports = { cloudinary, upload };
