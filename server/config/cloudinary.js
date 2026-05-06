@@ -12,10 +12,13 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     const isVideo = file.mimetype.startsWith('video');
-    console.log('Uploading to Cloudinary:', file.originalname, '| type:', file.mimetype, '| resource_type:', isVideo ? 'video' : 'image');
+    const isAudio = file.mimetype.startsWith('audio');
+    // Cloudinary groups audio under 'video' resource type
+    const resourceType = (isVideo || isAudio) ? 'video' : 'image';
+    console.log('Uploading:', file.originalname, '| mimetype:', file.mimetype, '| resource_type:', resourceType);
     return {
       folder: 'campus-complaints',
-      resource_type: 'auto', // let Cloudinary detect automatically
+      resource_type: resourceType,
       use_filename: false,
       unique_filename: true,
     };
