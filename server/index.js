@@ -77,6 +77,25 @@ async function start() {
 
     app.listen(PORT, () => {
       console.log(`🚀 API server running on http://localhost:${PORT}`);
+
+      // Keep Render free tier awake — ping every 14 minutes
+      if (process.env.RENDER_EXTERNAL_URL) {
+        const pingUrl = `${process.env.RENDER_EXTERNAL_URL}/api/health`;
+        setInterval(async () => {
+          try {
+            const http = require('http');
+            const https = require('https');
+            const client = pingUrl.startsWith('https') ? https : http;
+            client.get(pingUrl, (res) => {
+              console.log(`🏓 Keep-alive ping: ${res.statusCode}`);
+            }).on('error', (err) => {
+              console.warn('Keep-alive ping failed:', err.message);
+            });
+          } catch (e) {
+            // silent
+          }
+        }, 14 * 60 * 1000); // every 14 minutes
+      }
     });
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
