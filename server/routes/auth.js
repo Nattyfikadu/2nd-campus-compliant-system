@@ -1,23 +1,29 @@
 const express = require('express');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const User = require('../models/User');
 
 const router = express.Router();
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // use STARTTLS
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function sendEmail({ to, subject, html }) {
+  if (!process.env.RESEND_API_KEY) {
+    console.log('📧 No email configured. Content would be sent to:', to);
+    return { ok: false, fallback: true };
+  }
+  const { data, error } = await resend.emails.send({
+    from: 'Campus Complaint System <onboarding@resend.dev>',
+    to,
+    subject,
+    html,
   });
+  if (error) {
+    console.error('Resend error:', error);
+    return { ok: false, error };
+  }
+  console.log('✅ Email sent to:', to, '| id:', data?.id);
+  return { ok: true };
 }
 
 // Simple Student ID validation based on Ethiopian calendar rules
@@ -341,53 +347,33 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    // Always return success to prevent email enumeration
     if (!user) return res.json({ message: 'If that email exists, a reset link was sent' });
 
     const token = crypto.randomBytes(32).toString('hex');
     user.resetToken = token;
-    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
     await user.save();
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      try {
-        const transporter = getTransporter();
-        await transporter.sendMail({
-          from: `"Campus Complaint System" <${process.env.EMAIL_USER}>`,
-          to: user.email,
-          subject: 'Password Reset Request',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
-              <h2 style="color: #1A56DB;">Campus Complaint System</h2>
-              <p>Hi <strong>${user.fullName}</strong>,</p>
-              <p>You requested a password reset. Click the button below to reset your password:</p>
-              <a href="${resetUrl}" 
-                 style="display:inline-block; background:#1A56DB; color:#fff; 
-                        padding:12px 24px; border-radius:8px; text-decoration:none;
-                        font-weight:bold; margin: 16px 0;">
-                Reset My Password
-              </a>
-              <p style="color:#6B7280; font-size:13px;">
-                This link expires in <strong>1 hour</strong>. 
-                If you did not request this, ignore this email.
-              </p>
-              <hr style="border:none; border-top:1px solid #E5E7EB; margin:24px 0;" />
-              <p style="color:#9CA3AF; font-size:12px;">
-                Campus Complaint Management System — Bahir Dar University
-              </p>
-            </div>
-          `,
-        });
-        console.log('✅ Reset email sent to:', user.email);
-      } catch (emailErr) {
-        console.error('Email send error:', emailErr.message);
-        return res.json({ message: 'Email delivery failed. Use the link below.', resetUrl });
-      }
-    } else {
-      console.log('🔑 Password reset link (no email configured):', resetUrl);
-      return res.json({ message: 'Email not configured. Use the link below.', resetUrl });
+    const result = await sendEmail({
+      to: user.email,
+      subject: 'Password Reset Request',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;">
+          <h2 style="color:#1A56DB;">Campus Complaint System</h2>
+          <p>Hi <strong>${user.fullName}</strong>,</p>
+          <p>You requested a password reset. Click the button below:</p>
+          <a href="${resetUrl}" style="display:inline-block;background:#1A56DB;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">
+            Reset My Password
+          </a>
+          <p style="color:#6B7280;font-size:13px;">This link expires in <strong>1 hour</strong>. If you did not request this, ignore this email.</p>
+        </div>
+      `,
+    });
+
+    if (!result.ok) {
+      return res.json({ message: 'Email delivery failed. Use the link below.', resetUrl });
     }
 
     res.json({ message: 'If that email exists, a reset link was sent' });
