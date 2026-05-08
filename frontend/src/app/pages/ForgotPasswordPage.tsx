@@ -63,14 +63,14 @@ export function ForgotPasswordPage() {
               </div>
               <p className="font-medium text-gray-900">Request received</p>
               {resetUrl ? (
-                <div className="space-y-2 text-left p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800 font-medium">Email delivery unavailable. Click below to reset your password:</p>
-                  <a
-                    href={resetUrl}
-                    className="text-sm text-blue-600 hover:underline break-all block"
-                  >
-                    Reset my password
+                <div className="space-y-3 text-left p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 font-medium">
+                    Email delivery is currently unavailable. Use the button below to reset your password directly:
+                  </p>
+                  <a href={resetUrl} className="block">
+                    <Button className="w-full">Reset My Password</Button>
                   </a>
+                  <p className="text-xs text-blue-600">This link expires in 1 hour.</p>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">

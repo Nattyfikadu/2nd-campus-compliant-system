@@ -1,29 +1,44 @@
 const express = require('express');
 const crypto = require('crypto');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const User = require('../models/User');
 
 const router = express.Router();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'sandbox.smtp.mailtrap.io',
+    port: parseInt(process.env.SMTP_PORT || '2525'),
+    secure: false,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
 
 async function sendEmail({ to, subject, html }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log('📧 No email configured. Content would be sent to:', to);
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log('📧 No email configured. Would send to:', to);
     return { ok: false, fallback: true };
   }
-  const { data, error } = await resend.emails.send({
-    from: 'Campus Complaint System <onboarding@resend.dev>',
-    to,
-    subject,
-    html,
-  });
-  if (error) {
-    console.error('Resend error:', error);
-    return { ok: false, error };
+  try {
+    const transporter = getTransporter();
+    await transporter.sendMail({
+      from: '"Campus Complaint System" <noreply@campus.edu>',
+      to,
+      subject,
+      html,
+    });
+    console.log('✅ Email sent to:', to);
+    return { ok: true };
+  } catch (err) {
+    console.error('Email send error:', err.message);
+    return { ok: false, error: err.message };
   }
-  console.log('✅ Email sent to:', to, '| id:', data?.id);
-  return { ok: true };
 }
 
 // Simple Student ID validation based on Ethiopian calendar rules
