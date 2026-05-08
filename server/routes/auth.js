@@ -5,17 +5,13 @@ const User = require('../models/User');
 
 const router = express.Router();
 
+// Nodemailer transporter using Gmail
 function getTransporter() {
   return nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
+    service: 'gmail',
     auth: {
-      user: process.env.BREVO_USER,
-      pass: process.env.BREVO_SMTP_KEY,
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
   });
 }
@@ -351,18 +347,33 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
-    if (process.env.BREVO_USER && process.env.BREVO_SMTP_KEY) {
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       try {
         const transporter = getTransporter();
         await transporter.sendMail({
-          from: `"Campus Complaint System" <${process.env.BREVO_USER}>`,
+          from: `"Campus Complaint System" <${process.env.EMAIL_USER}>`,
           to: user.email,
           subject: 'Password Reset Request',
           html: `
-            <p>Hi ${user.fullName},</p>
-            <p>You requested a password reset. Click the link below:</p>
-            <p><a href="${resetUrl}" style="color:#2563eb">Reset my password</a></p>
-            <p>This link expires in 1 hour.</p>
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+              <h2 style="color: #1A56DB;">Campus Complaint System</h2>
+              <p>Hi <strong>${user.fullName}</strong>,</p>
+              <p>You requested a password reset. Click the button below to reset your password:</p>
+              <a href="${resetUrl}" 
+                 style="display:inline-block; background:#1A56DB; color:#fff; 
+                        padding:12px 24px; border-radius:8px; text-decoration:none;
+                        font-weight:bold; margin: 16px 0;">
+                Reset My Password
+              </a>
+              <p style="color:#6B7280; font-size:13px;">
+                This link expires in <strong>1 hour</strong>. 
+                If you did not request this, ignore this email.
+              </p>
+              <hr style="border:none; border-top:1px solid #E5E7EB; margin:24px 0;" />
+              <p style="color:#9CA3AF; font-size:12px;">
+                Campus Complaint Management System — Bahir Dar University
+              </p>
+            </div>
           `,
         });
         console.log('✅ Reset email sent to:', user.email);
