@@ -30,6 +30,9 @@ const UserSchema = new mongoose.Schema(
     // Password reset
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
+    // OTP reset
+    otpCode: { type: String },
+    otpExpiry: { type: Date },
     // Visitor-specific (minimal)
     // They can optionally provide email/phone for notifications
   },
