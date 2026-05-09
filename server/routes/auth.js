@@ -1,42 +1,27 @@
 const express = require('express');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const User = require('../models/User');
 
 const router = express.Router();
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'sandbox.smtp.mailtrap.io',
-    port: parseInt(process.env.SMTP_PORT || '2525'),
-    secure: false,
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-}
-
 async function sendEmail({ to, subject, html }) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.log('📧 No email configured. Would send to:', to);
+  if (!process.env.SENDGRID_API_KEY) {
+    console.log('📧 No SendGrid key. Would send to:', to);
     return { ok: false, fallback: true };
   }
   try {
-    const transporter = getTransporter();
-    await transporter.sendMail({
-      from: '"Campus Complaint System" <noreply@campus.edu>',
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    await sgMail.send({
       to,
+      from: process.env.SENDGRID_FROM || 'noreply@campus-complaints.com',
       subject,
       html,
     });
     console.log('✅ Email sent to:', to);
     return { ok: true };
   } catch (err) {
-    console.error('Email send error:', err.message);
+    console.error('SendGrid error:', err.response?.body || err.message);
     return { ok: false, error: err.message };
   }
 }
