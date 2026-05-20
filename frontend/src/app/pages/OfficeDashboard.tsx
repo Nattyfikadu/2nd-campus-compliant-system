@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog';
-import { FileText, Clock, CheckCircle2, XCircle, UserCheck, AlertCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, XCircle, UserCheck, AlertCircle, Mail, CreditCard, Building2, GraduationCap, Briefcase, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Textarea } from '@/app/components/ui/textarea';
 
@@ -215,18 +215,18 @@ export function OfficeDashboard() {
                   {/* Detail grid */}
                   <div className="bg-gray-50 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-4 text-sm">
                     {[
-                      { icon: '✉️', label: 'Email', value: s.email },
-                      { icon: '🪪', label: 'Staff ID', value: s.staffId },
-                      { icon: '🏢', label: 'Department', value: s.department },
-                      { icon: '🎓', label: 'Faculty', value: s.faculty },
-                      { icon: '💼', label: 'Position', value: s.position },
-                      { icon: '📍', label: 'Locations', value: (s.staffLocations || []).map((loc: string) => locationLabels[loc] || loc).join(', ') || undefined },
-                      { icon: '📞', label: 'Phone', value: s.phone },
+                      { icon: <Mail className="size-3.5 text-muted-foreground" />, label: 'Email', value: s.email },
+                      { icon: <CreditCard className="size-3.5 text-muted-foreground" />, label: 'Staff ID', value: s.staffId },
+                      { icon: <Building2 className="size-3.5 text-muted-foreground" />, label: 'Department', value: s.department },
+                      { icon: <GraduationCap className="size-3.5 text-muted-foreground" />, label: 'Faculty', value: s.faculty },
+                      { icon: <Briefcase className="size-3.5 text-muted-foreground" />, label: 'Position', value: s.position },
+                      { icon: <MapPin className="size-3.5 text-muted-foreground" />, label: 'Locations', value: (s.staffLocations || []).map((loc: string) => locationLabels[loc] || loc).join(', ') || undefined },
+                      { icon: <Phone className="size-3.5 text-muted-foreground" />, label: 'Phone', value: s.phone },
                     ]
                       .filter((row) => row.value)
                       .map((row) => (
                         <div key={row.label} className="flex items-start gap-2">
-                          <span className="text-base leading-5">{row.icon}</span>
+                          <span className="mt-0.5 shrink-0">{row.icon}</span>
                           <span className="text-muted-foreground font-medium w-20 shrink-0">{row.label}:</span>
                           <span className="text-gray-900 font-medium break-all">{row.value}</span>
                         </div>

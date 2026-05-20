@@ -5,6 +5,7 @@ import { ComplaintForm } from '@/app/components/ComplaintForm';
 import { ComplaintCard } from '@/app/components/ComplaintCard';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent } from '@/app/components/ui/card';
+import { Skeleton } from '@/app/components/ui/skeleton';
 import {
   PlusCircle,
   FileText,
@@ -19,7 +20,7 @@ type FilterKey = 'all' | 'pending' | 'in-progress' | 'resolved' | 'rejected';
 
 export function StudentDashboard() {
   const { user } = useAuth();
-  const { getComplaintsByUser } = useComplaints();
+  const { getComplaintsByUser, isLoading } = useComplaints();
   const [showForm, setShowForm] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
 
@@ -108,6 +109,48 @@ export function StudentDashboard() {
     : userComplaints.filter(c => c.status === activeFilter);
 
   const activeLabel = stats.find(s => s.key === activeFilter)?.label ?? 'All';
+
+  // Show skeleton while loading initial data
+  if (isLoading && userComplaints.length === 0) {
+    return (
+      <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-11 w-40" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i} className="border">
+              <CardContent className="pt-5 pb-4 px-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-10 w-12" />
+                  </div>
+                  <Skeleton className="size-11 rounded-xl" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="border">
+              <CardContent className="pt-5 space-y-3">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-2 w-full rounded-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

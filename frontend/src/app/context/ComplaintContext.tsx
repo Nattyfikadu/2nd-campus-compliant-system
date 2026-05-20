@@ -67,6 +67,7 @@ export interface Complaint {
 
 interface ComplaintContextType {
   complaints: Complaint[];
+  isLoading: boolean;
   addComplaint: (
     complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>
   ) => Promise<Complaint | null>;
@@ -93,6 +94,7 @@ const ComplaintContext = createContext<ComplaintContextType | undefined>(undefin
 
 export function ComplaintProvider({ children }: { children: ReactNode }) {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Helper to convert ISO date strings from API to Date objects
   const hydrateComplaintDates = (c: any): Complaint => ({
@@ -104,13 +106,15 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
 
   const reloadComplaints = async () => {
     try {
+      setIsLoading(true);
       const res = await fetch(`${API_BASE}/api/complaints`);
       const json = await res.json();
-      // API returns { data: [], pagination: {} } — handle both shapes
       const list = Array.isArray(json) ? json : (json.data ?? []);
       setComplaints(list.map(hydrateComplaintDates));
     } catch (err) {
       console.error('Failed to load complaints from API', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -236,6 +240,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
   return (
     <ComplaintContext.Provider value={{
       complaints,
+      isLoading,
       addComplaint,
       updateComplaintStatus,
       getComplaintsByUser,

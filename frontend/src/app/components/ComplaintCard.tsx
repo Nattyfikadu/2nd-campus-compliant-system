@@ -40,6 +40,58 @@ const statusConfig = {
   rejected: { label: 'Rejected', icon: XCircle, color: 'bg-red-100 text-red-700 border-red-200' },
 };
 
+// 5-step lifecycle — rejected is a branch off pending, not a step
+const LIFECYCLE_STEPS: { key: string; label: string }[] = [
+  { key: 'pending', label: 'Submitted' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'in-progress', label: 'In Progress' },
+  { key: 'resolved', label: 'Resolved' },
+];
+
+function StatusProgressBar({ status }: { status: string }) {
+  if (status === 'rejected') {
+    return (
+      <div className="flex items-center gap-1.5 mt-3">
+        <div className="flex-1 h-1.5 rounded-full bg-red-200" />
+        <span className="text-xs text-red-600 font-medium shrink-0">Rejected</span>
+      </div>
+    );
+  }
+  const currentIndex = LIFECYCLE_STEPS.findIndex(s => s.key === status);
+  return (
+    <div className="mt-3 space-y-1.5">
+      <div className="flex items-center gap-1">
+        {LIFECYCLE_STEPS.map((step, i) => {
+          const done = i < currentIndex;
+          const active = i === currentIndex;
+          return (
+            <div key={step.key} className="flex items-center flex-1 gap-1">
+              <div className={`h-1.5 flex-1 rounded-full transition-all duration-500
+                ${done ? 'bg-blue-500' : active ? 'bg-blue-400' : 'bg-gray-200'}`} />
+              {i === LIFECYCLE_STEPS.length - 1 && (
+                <div className={`size-2.5 rounded-full shrink-0
+                  ${done || active ? 'bg-blue-500' : 'bg-gray-200'}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex justify-between">
+        {LIFECYCLE_STEPS.map((step, i) => {
+          const done = i < currentIndex;
+          const active = i === currentIndex;
+          return (
+            <span key={step.key} className={`text-xs font-medium
+              ${active ? 'text-blue-600' : done ? 'text-blue-400' : 'text-gray-400'}`}>
+              {step.label}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const locationLabels: Record<string, string> = {
   cafeteria: 'Cafeteria',
   dormitory: 'Dormitory',
@@ -106,6 +158,7 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
                   {issueTypeLabels[complaint.category]}
                 </Badge>
               </div>
+              <StatusProgressBar status={complaint.status} />
             </div>
             {canDelete && (
               <button
