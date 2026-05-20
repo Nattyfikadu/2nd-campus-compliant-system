@@ -5,7 +5,8 @@ const { upload } = require('../config/cloudinary');
 const router = express.Router();
 
 function generateTrackingCode() {
-  const num = Math.floor(10000 + Math.random() * 90000);
+  // cryptographically secure random 5-digit number
+  const num = require('crypto').randomInt(10000, 99999);
   return `CMP-${num}`;
 }
 

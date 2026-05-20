@@ -25,9 +25,24 @@ const storage = new CloudinaryStorage({
   },
 });
 
+// Allowed MIME type prefixes — block executables and other dangerous files
+const ALLOWED_MIME_PREFIXES = ['image/', 'video/', 'audio/'];
+const ALLOWED_MIME_EXACT = ['application/pdf', 'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain'];
+
 const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed =
+      ALLOWED_MIME_PREFIXES.some(p => file.mimetype.startsWith(p)) ||
+      ALLOWED_MIME_EXACT.includes(file.mimetype);
+    if (!allowed) {
+      return cb(new Error(`File type not allowed: ${file.mimetype}`));
+    }
+    cb(null, true);
+  },
 });
 
 module.exports = { cloudinary, upload };

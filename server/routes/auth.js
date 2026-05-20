@@ -15,6 +15,9 @@ async function sendEmail({ to, subject, html }) {
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false,
+      connectionTimeout: 3000,  // fail fast — 3 seconds
+      greetingTimeout: 3000,
+      socketTimeout: 5000,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
     await transporter.sendMail({
@@ -35,7 +38,21 @@ async function sendEmail({ to, subject, html }) {
 // - Exactly 7 digits
 // - Month between 01 and 12
 // - Join year must not be more than MAX_STUDY_YEARS behind CURRENT_EC_YEAR
-const CURRENT_EC_YEAR = 2018;
+// Dynamic Ethiopian Calendar year calculation
+// Ethiopian calendar is ~7-8 years behind Gregorian.
+// Ethiopian New Year is ~September 11 (Gregorian).
+// Before Sep 11: EC_year = Gregorian_year - 8
+// After Sep 11:  EC_year = Gregorian_year - 7
+function getCurrentECYear() {
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+  const day = now.getDate();
+  const gregorianYear = now.getFullYear();
+  // Ethiopian New Year falls around Sep 11
+  const afterNewYear = month > 9 || (month === 9 && day >= 11);
+  return afterNewYear ? gregorianYear - 7 : gregorianYear - 8;
+}
+
 const MAX_STUDY_YEARS = 6;
 
 function validateStudentId(studentId) {
@@ -55,7 +72,7 @@ function validateStudentId(studentId) {
   }
 
   const joinYear = 2000 + yearPart;
-  const studyDuration = CURRENT_EC_YEAR - joinYear;
+  const studyDuration = getCurrentECYear() - joinYear;
 
   if (studyDuration < 0) {
     return { valid: false, error: 'Student ID has a future join year, which is invalid.' };
@@ -352,8 +369,8 @@ router.post('/forgot-password', async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.json({ message: 'If that email exists, an OTP was sent' });
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate 6-digit OTP — cryptographically secure
+    const otp = require('crypto').randomInt(100000, 999999).toString();
     const expiry = parseInt(process.env.OTP_EXPIRY_MINUTES || '10');
     user.otpCode = otp;
     user.otpExpiry = new Date(Date.now() + expiry * 60 * 1000);
