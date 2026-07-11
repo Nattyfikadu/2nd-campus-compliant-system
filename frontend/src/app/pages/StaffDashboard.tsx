@@ -76,7 +76,7 @@ export function StaffDashboard() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user.fullName || user.name}
+          {user.isNewUser ? `Welcome, ${user.fullName || user.name}` : `Welcome back, ${user.fullName || user.name}`}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Manage complaints assigned to you

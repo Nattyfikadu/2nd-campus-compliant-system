@@ -38,7 +38,22 @@ async function sendEmail({ to, subject, html }) {
 // - Exactly 7 digits
 // - Month between 01 and 12
 // - Join year must not be more than MAX_STUDY_YEARS behind CURRENT_EC_YEAR
-// Dynamic Ethiopian Calendar year calculation
+// Password strength validation — min 8 chars, uppercase, number, special char
+function validatePassword(password) {
+  if (!password || password.length < 8) {
+    return 'Password must be at least 8 characters.';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain at least one uppercase letter.';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must contain at least one number.';
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return 'Password must contain at least one special character (e.g. @, #, !, _).';
+  }
+  return null;
+}
 // Ethiopian calendar is ~7-8 years behind Gregorian.
 // Ethiopian New Year is ~September 11 (Gregorian).
 // Before Sep 11: EC_year = Gregorian_year - 8
@@ -109,6 +124,9 @@ router.post('/register', async (req, res) => {
     if (!fullName || !email || !password || !role) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    const pwError = validatePassword(password);
+    if (pwError) return res.status(400).json({ error: pwError });
 
     // Role-specific validation
     if (role === 'student' && !studentId) {
@@ -440,7 +458,8 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
     if (!resetToken || !newPassword) return res.status(400).json({ error: 'Token and new password are required' });
-    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const pwError = validatePassword(newPassword);
+    if (pwError) return res.status(400).json({ error: pwError });
 
     const user = await User.findOne({
       resetToken,

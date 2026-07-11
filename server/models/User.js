@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const UserSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true },  // unique handled inline
+    email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     role: {
       type: String,
@@ -12,12 +12,12 @@ const UserSchema = new mongoose.Schema(
       required: true,
     },
     // Student-specific fields
-    studentId: { type: String, unique: true, sparse: true },
+    studentId: { type: String, sparse: true }, // Only for students, unique but sparse
     phone: { type: String },
     department: { type: String },
-    faculty: { type: String },
+    faculty: { type: String }, // Alternative to department
     // Staff-specific fields
-    staffId: { type: String, unique: true, sparse: true },
+    staffId: { type: String, sparse: true }, // Only for staff
     position: { type: String }, // Job title/position for staff
     staffLocations: {
       type: [String],
@@ -27,12 +27,6 @@ const UserSchema = new mongoose.Schema(
     staffApproved: { type: Boolean, default: false }, // Only applies to role='staff'
     staffRejected: { type: Boolean, default: false }, // Only applies to role='staff'
     staffRejectionReason: { type: String }, // Only applies to role='staff'
-    // Password reset
-    resetToken: { type: String },
-    resetTokenExpiry: { type: Date },
-    // OTP reset
-    otpCode: { type: String },
-    otpExpiry: { type: Date },
     // Visitor-specific (minimal)
     // They can optionally provide email/phone for notifications
   },
@@ -41,8 +35,9 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-// Only add indexes not already declared inline above
-UserSchema.index({ role: 1, staffApproved: 1, staffRejected: 1 });
+// Index for studentId uniqueness (only for students)
+// UserSchema.index({ studentId: 1 }, { unique: true, sparse: true });
+// UserSchema.index({ staffId: 1 }, { unique: true, sparse: true });
 
 // Hash password before saving
 UserSchema.pre('save', async function () {

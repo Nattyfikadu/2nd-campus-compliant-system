@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../campus-mobile"
+		}
+	],
+	"settings": {
+		"kiroAgent.configureMCP": "Disabled"
+	}
+}

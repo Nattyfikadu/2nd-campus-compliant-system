@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { ComplaintLocation, IssueType } from '@/app/context/ComplaintContext';
 import { ShieldCheck, Loader2, MapPin, Tag, Paperclip, ArrowLeft, Search } from 'lucide-react';
 
-import { API_BASE } from '@/lib/api';
+const API_BASE = 'http://localhost:4000';
 
 const locations: { value: ComplaintLocation; label: string }[] = [
   { value: 'unknown', label: 'Unknown' },
@@ -198,7 +198,7 @@ export function AnonymousComplaintPage() {
                 id="attachments"
                 type="file"
                 multiple
-                accept="image/*,video/*,audio/*"
+                accept="image/*,video/*"
                 onChange={(e) => setFiles(e.target.files)}
                 disabled={isSubmitting}
                 className="cursor-pointer"

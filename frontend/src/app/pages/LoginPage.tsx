@@ -6,7 +6,7 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { Separator } from '@/app/components/ui/separator';
-import { Eye, EyeOff, ShieldCheck, ClipboardList, Bell, ArrowRight, LogIn, Search } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, ClipboardList, Bell, ArrowRight, LogIn } from 'lucide-react';
 
 const features = [
   {
@@ -122,8 +122,8 @@ export function LoginPage() {
 
           {/* Heading */}
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
+            <h2 className="text-2xl font-bold text-gray-900">Sign in to your account</h2>
+            <p className="text-sm text-muted-foreground">Enter your credentials to continue</p>
           </div>
 
           {/* Form */}
@@ -142,12 +142,7 @@ export function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -222,16 +217,6 @@ export function LoginPage() {
             >
               <ShieldCheck className="size-3.5" />
               Submit an anonymous complaint
-            </Link>
-          </div>
-
-          <div className="text-center">
-            <Link
-              to="/track"
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-blue-600 transition-colors"
-            >
-              <Search className="size-3.5" />
-              Track complaint status
             </Link>
           </div>
 

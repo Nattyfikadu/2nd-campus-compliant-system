@@ -6,7 +6,8 @@ import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { Badge } from '@/app/components/ui/badge';
-import { API_BASE } from '@/lib/api';
+
+const API_BASE = 'http://localhost:4000';
 
 export function TrackComplaintPage() {
   const [code, setCode] = useState('');

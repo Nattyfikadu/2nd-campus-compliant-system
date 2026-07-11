@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { API_BASE } from '@/lib/api';
 import { User } from './AuthContext';
 
 export type ComplaintStatus = 'pending' | 'approved' | 'in-progress' | 'resolved' | 'rejected';
@@ -23,7 +22,7 @@ export type IssueType =
 
 export interface Attachment {
   url: string;
-  type: 'image' | 'video' | 'audio' | 'file';
+  type: 'image' | 'video';
   originalName: string;
 }
 
@@ -67,7 +66,6 @@ export interface Complaint {
 
 interface ComplaintContextType {
   complaints: Complaint[];
-  isLoading: boolean;
   addComplaint: (
     complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>
   ) => Promise<Complaint | null>;
@@ -87,14 +85,12 @@ interface ComplaintContextType {
   getComplaintsByStatus: (status: ComplaintStatus) => Complaint[];
   getComplaintsByAssignee: (assigneeId: string) => Complaint[];
   reloadComplaints: () => Promise<void>;
-  deleteComplaint: (id: string) => Promise<boolean>;
 }
 
 const ComplaintContext = createContext<ComplaintContextType | undefined>(undefined);
 
 export function ComplaintProvider({ children }: { children: ReactNode }) {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Helper to convert ISO date strings from API to Date objects
   const hydrateComplaintDates = (c: any): Complaint => ({
@@ -106,15 +102,11 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
 
   const reloadComplaints = async () => {
     try {
-      setIsLoading(true);
-      const res = await fetch(`${API_BASE}/api/complaints`);
-      const json = await res.json();
-      const list = Array.isArray(json) ? json : (json.data ?? []);
-      setComplaints(list.map(hydrateComplaintDates));
+      const res = await fetch('http://localhost:4000/api/complaints');
+      const data = await res.json();
+      setComplaints(data.map(hydrateComplaintDates));
     } catch (err) {
       console.error('Failed to load complaints from API', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -140,7 +132,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     complaint: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'status'>
   ): Promise<Complaint | null> => {
     try {
-      const res = await fetch(`${API_BASE}/api/complaints`, {
+      const res = await fetch('http://localhost:4000/api/complaints', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -180,7 +172,7 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     supportStaffAdd?: { id: string; name: string }
   ) => {
     try {
-      const res = await fetch(`${API_BASE}/api/complaints/${id}/status`, {
+      const res = await fetch(`http://localhost:4000/api/complaints/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -224,30 +216,15 @@ export function ComplaintProvider({ children }: { children: ReactNode }) {
     return complaints.filter(c => c.assignedTo?.id === assigneeId);
   };
 
-  const deleteComplaint = async (id: string): Promise<boolean> => {
-    try {
-      const res = await fetch(`${API_BASE}/api/complaints/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) return false;
-      setComplaints(prev => prev.filter(c => c.id !== id));
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   return (
     <ComplaintContext.Provider value={{
       complaints,
-      isLoading,
       addComplaint,
       updateComplaintStatus,
       getComplaintsByUser,
       getComplaintsByStatus,
       getComplaintsByAssignee,
-      reloadComplaints,
-      deleteComplaint,
+      reloadComplaints
     }}>
       {children}
     </ComplaintContext.Provider>

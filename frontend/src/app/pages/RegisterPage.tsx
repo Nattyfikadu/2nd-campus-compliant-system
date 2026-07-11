@@ -6,7 +6,48 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { Checkbox } from '@/app/components/ui/checkbox';
-import { Eye, EyeOff, GraduationCap, UserPlus, Building2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, GraduationCap, UserPlus, Building2, ArrowLeft, Check, X } from 'lucide-react';
+
+// Live password strength checker
+function getPasswordStrength(pw: string): { score: number; checks: { label: string; ok: boolean }[] } {
+  const checks = [
+    { label: 'At least 8 characters', ok: pw.length >= 8 },
+    { label: 'Uppercase letter (A-Z)', ok: /[A-Z]/.test(pw) },
+    { label: 'Number (0-9)', ok: /[0-9]/.test(pw) },
+    { label: 'Special character (@#!_...)', ok: /[^A-Za-z0-9]/.test(pw) },
+  ];
+  const score = checks.filter(c => c.ok).length;
+  return { score, checks };
+}
+
+function PasswordStrengthMeter({ password }: { password: string }) {
+  if (!password) return null;
+  const { score, checks } = getPasswordStrength(password);
+  const colors = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-emerald-500'];
+  const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+  return (
+    <div className="space-y-2 mt-1.5">
+      <div className="flex gap-1">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < score ? colors[score - 1] : 'bg-gray-200'}`} />
+        ))}
+      </div>
+      <p className={`text-xs font-medium ${score === 4 ? 'text-emerald-600' : score >= 2 ? 'text-amber-600' : 'text-red-500'}`}>
+        {password.length > 0 ? labels[score - 1] || 'Weak' : ''}
+      </p>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+        {checks.map(c => (
+          <div key={c.label} className="flex items-center gap-1.5">
+            {c.ok
+              ? <Check className="size-3 text-emerald-500 shrink-0" />
+              : <X className="size-3 text-gray-300 shrink-0" />}
+            <span className={`text-xs ${c.ok ? 'text-emerald-600' : 'text-muted-foreground'}`}>{c.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const initialFormData = {
   fullName: '',
@@ -91,8 +132,23 @@ export function RegisterPage() {
       setLoading(false);
       return;
     }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      setLoading(false);
+      return;
+    }
+    if (!/[A-Z]/.test(formData.password)) {
+      setError('Password must contain at least one uppercase letter');
+      setLoading(false);
+      return;
+    }
+    if (!/[0-9]/.test(formData.password)) {
+      setError('Password must contain at least one number');
+      setLoading(false);
+      return;
+    }
+    if (!/[^A-Za-z0-9]/.test(formData.password)) {
+      setError('Password must contain at least one special character');
       setLoading(false);
       return;
     }
@@ -369,46 +425,56 @@ export function RegisterPage() {
             </div>
 
             {/* Password */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Min. 6 characters"
-                    value={formData.password}
-                    onChange={(e) => handleChange('password', e.target.value)}
-                    required
-                    minLength={6}
-                    className="h-10 pr-9"
-                  />
-                  <button type="button" tabIndex={-1}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700">
-                    {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                  </button>
-                </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Min. 8 chars, uppercase, number, symbol"
+                  value={formData.password}
+                  onChange={(e) => handleChange('password', e.target.value)}
+                  required
+                  className="h-10 pr-9"
+                />
+                <button type="button" tabIndex={-1}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700">
+                  {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                </button>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm Password <span className="text-red-500">*</span></Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="Re-enter password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                    required
-                    className="h-10 pr-9"
-                  />
-                  <button type="button" tabIndex={-1}
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700">
-                    {showConfirm ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                  </button>
-                </div>
+              <PasswordStrengthMeter password={formData.password} />
+            </div>
+
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirm Password <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirm ? 'text' : 'password'}
+                  placeholder="Re-enter password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                  required
+                  className={`h-10 pr-9 ${formData.confirmPassword && formData.confirmPassword !== formData.password ? 'border-red-300' : ''}`}
+                />
+                <button type="button" tabIndex={-1}
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700">
+                  {showConfirm ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                </button>
               </div>
+              {formData.confirmPassword && formData.confirmPassword !== formData.password && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <X className="size-3" /> Passwords do not match
+                </p>
+              )}
+              {formData.confirmPassword && formData.confirmPassword === formData.password && (
+                <p className="text-xs text-emerald-600 flex items-center gap-1">
+                  <Check className="size-3" /> Passwords match
+                </p>
+              )}
             </div>
 
             {error && (

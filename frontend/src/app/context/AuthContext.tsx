@@ -9,6 +9,7 @@ export interface User {
   name?: string;
   email: string;
   role: UserRole;
+  isNewUser?: boolean;
   department?: string;
   faculty?: string;
   studentId?: string;
@@ -75,9 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: data?.error || 'Login failed' };
       }
       const data = await res.json();
-      const userData = { ...data.user, name: data.user.fullName };
+      const userData = { ...data.user, name: data.user.fullName, isNewUser: true };
       setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('user', JSON.stringify({ ...userData, isNewUser: false }));
       return { success: true };
     } catch {
       return { success: false, error: 'Network error. Please try again.' };

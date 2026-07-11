@@ -7,8 +7,18 @@ import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { toast } from 'sonner';
-import { Eye, EyeOff, KeyRound, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, ArrowLeft, Check, X } from 'lucide-react';
 import { API_BASE } from '@/lib/api';
+
+function getPasswordStrength(pw: string) {
+  const checks = [
+    { label: 'At least 8 characters', ok: pw.length >= 8 },
+    { label: 'Uppercase letter', ok: /[A-Z]/.test(pw) },
+    { label: 'Number', ok: /[0-9]/.test(pw) },
+    { label: 'Special character', ok: /[^A-Za-z0-9]/.test(pw) },
+  ];
+  return { score: checks.filter(c => c.ok).length, checks };
+}
 
 export function ChangePasswordPage() {
   const { user } = useAuth();
@@ -23,8 +33,13 @@ export function ChangePasswordPage() {
     e.preventDefault();
     setError('');
 
-    if (form.next.length < 6) {
-      setError('New password must be at least 6 characters');
+    if (form.next.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    const { score } = getPasswordStrength(form.next);
+    if (score < 4) {
+      setError('Password must contain uppercase, number and special character');
       return;
     }
     if (form.next !== form.confirm) {
